@@ -47,7 +47,7 @@
             ['L' => 'Tržišni Potencijal', 'V' => number_format($totalValue, 0, ',', '.') . ' KM', 'I' => 'trending-up', 'C' => 'text-blue-600 dark:text-blue-400', 'B' => 'border-b-blue-500'],
             ['L' => 'Aktivni Tenderi', 'V' => $tenders->total(), 'I' => 'clipboard-check', 'C' => 'text-emerald-600 dark:text-emerald-400', 'B' => 'border-b-emerald-500'],
             ['L' => 'Ugovorni Organi', 'V' => $authoritiesCount, 'I' => 'building-2', 'C' => 'text-amber-600 dark:text-amber-400', 'B' => 'border-b-amber-500'],
-            ['L' => 'Danas Objavljeno', 'V' => '12', 'I' => 'zap', 'C' => 'text-rose-600 dark:text-rose-400', 'B' => 'border-b-rose-500']
+            ['L' => 'Danas Objavljeno', 'V' => $todayCount, 'I' => 'zap', 'C' => 'text-rose-600 dark:text-rose-400', 'B' => 'border-b-rose-500']
         ] as $stat)
         <div class="stats-card p-5 rounded-2xl transition-all hover:translate-y-[-2px] border-b-2 {{ $stat['B'] }}">
             <div class="flex items-center justify-between mb-3">
@@ -61,7 +61,7 @@
         @endforeach
     </div>
 
-<div class="space-y-4 mb-8">
+    <div class="space-y-4 mb-8">
         <div class="flex flex-col lg:flex-row gap-4">
             {{-- Search Input --}}
             <div class="relative flex-1 group">
@@ -122,12 +122,12 @@
             </div>
         @endif
     </div>
+    
     {{-- TENDER FEED --}}
     <div class="space-y-6">
         @foreach($tenders as $tender)
         
         @php
-            // NOVA, PRECIZNA LOGIKA STATUSA
             $statusInfo = match($tender->workflow?->status) {
                 'accepted' => ['color' => 'blue', 'bg' => 'bg-blue-50 dark:bg-blue-500/5', 'border' => 'border-blue-500', 'text' => 'text-blue-600 dark:text-blue-500', 'label' => 'PRIHVAĆEN'],
                 'documentation_uploaded' => ['color' => 'amber', 'bg' => 'bg-amber-50 dark:bg-amber-500/5', 'border' => 'border-amber-500', 'text' => 'text-amber-600 dark:text-amber-500', 'label' => 'U PROCESU'],
@@ -142,7 +142,6 @@
         <article wire:key="tender-{{ $tender->id }}" 
             class="tender-card relative rounded-2xl overflow-hidden transition-all duration-300 flex border-l-0 {{ $statusInfo['bg'] }}">
             
-            {{-- VERTIKALNI STATUS BANNER --}}
             <div class="w-8 shrink-0 flex items-center justify-center border-r transition-colors duration-300 border-slate-200 dark:border-slate-800/50 {{ $statusInfo['bg'] }}">
                 <div class="absolute left-0 top-0 bottom-0 w-1 bg-{{ $statusInfo['color'] }}-500"></div>
                 <span class="transform -rotate-90 whitespace-nowrap text-[8px] font-black tracking-[0.3em] uppercase {{ $statusInfo['text'] }}">
@@ -166,7 +165,6 @@
                         <h2 class="text-xl font-black text-slate-900 dark:text-white leading-tight mb-6 uppercase tracking-tight">{{ $tender->name }}</h2>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                            {{-- PODACI O ORGANU I KONTAKTU --}}
                             <div class="space-y-4">
                                 <div class="flex gap-4">
                                     <div class="w-8 h-8 bg-slate-100 dark:bg-slate-800/50 rounded flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700"><i data-lucide="landmark" class="w-4 h-4 text-blue-500 dark:text-blue-400"></i></div>
@@ -215,11 +213,27 @@
 
                     {{-- SEKCIJA ZA AKCIJE --}}
                     <div class="flex flex-col justify-between items-start lg:items-end min-w-[260px] border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-slate-800/50 pt-6 lg:pt-0 lg:pl-8">
-                        <div class="text-left lg:text-right w-full mb-8">
-                            <p class="label-sm mb-1">Procjenjena Vrijednost</p>
-                            <p class="text-4xl font-black text-slate-900 dark:text-white data-mono tracking-tighter">{{ number_format($tender->lots_sum_estimated_value, 2, ',', '.') }}<span class="text-xs ml-1 opacity-40">KM</span></p>
-                            <p class="text-[9px] font-bold text-slate-400 dark:text-slate-600 uppercase mt-2">Interni ID: #{{ $tender->id }}</p>
-                        </div>
+                    <div class="text-left lg:text-right w-full mb-8">
+                        @php
+                            $isAccepted = in_array($tender->workflow?->status, ['accepted', 'documentation_uploaded', 'offer_submitted', 'completed', 'won', 'lost']);
+                            $acceptedLots = $tender->workflow?->accepted_lots ?? [];
+                            if (is_string($acceptedLots)) $acceptedLots = json_decode($acceptedLots, true) ?? [];
+                            
+                            if ($isAccepted && count($acceptedLots) > 0) {
+                                $displayValue = $tender->lots->whereIn('id', $acceptedLots)->sum('estimated_value');
+                                $valueLabel = 'Vrijednost prihvaćenih lotova';
+                                $valueColor = 'text-emerald-600 dark:text-emerald-400';
+                            } else {
+                                $displayValue = $tender->lots_sum_estimated_value;
+                                $valueLabel = 'Ukupna procjenjena vrijednost';
+                                $valueColor = 'text-slate-900 dark:text-white';
+                            }
+                        @endphp
+
+                        <p class="label-sm mb-1">{{ $valueLabel }}</p>
+                        <p class="text-4xl font-black {{ $valueColor }} data-mono tracking-tighter">{{ number_format($displayValue, 2, ',', '.') }}<span class="text-xs ml-1 opacity-40">KM</span></p>
+                        <p class="text-[9px] font-bold text-slate-400 dark:text-slate-600 uppercase mt-2">Interni ID: #{{ $tender->id }}</p>
+                    </div>
 
                         <div class="w-full space-y-3">
                             <button wire:click="analyzeMarket('{{ $tender->contracting_authority_id }}')" 
@@ -228,9 +242,7 @@
                             </button>
                             
                             <div class="w-full">
-                                {{-- NOVA LOGIKA DUGMADI ZASNOVANA NA TVOM OPISU --}}
                                 @if(in_array($tender->workflow?->status, ['accepted', 'documentation_uploaded']))
-                                    {{-- AKO JE PRIHVAĆEN ILI SE RADI DOKUMENTACIJA --}}
                                     <a href="{{ route('tender.progress', $tender->workflow->id) }}" wire:navigate 
                                     class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center gap-2 transition-all shadow-md">
                                         <i data-lucide="arrow-right-circle" class="w-4 h-4"></i>
@@ -238,7 +250,6 @@
                                     </a>
                                 
                                 @elseif(in_array($tender->workflow?->status, ['offer_submitted', 'completed']))
-                                    {{-- AKO JE PREDAT NA PORTAL (ČEKA SE ODLUKA) --}}
                                     <div class="flex gap-2">
                                         <button wire:click="markAsWon('{{ $tender->workflow->id }}')" 
                                             class="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 py-3 rounded-xl text-[10px] font-black uppercase transition-all flex justify-center items-center gap-1 shadow-sm">
@@ -251,33 +262,36 @@
                                     </div>
                                 
                                 @elseif($tender->workflow?->status === 'won')
-                                    {{-- AKO JE DOBIEN --}}
                                     <div class="w-full py-3 bg-emerald-500 text-white border border-emerald-400 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.3)]">
                                         <i data-lucide="trophy" class="w-4 h-4"></i>
                                         <span class="text-[10px] font-black uppercase tracking-widest">Tender Dobijen</span>
                                     </div>
                                     
                                 @elseif($tender->workflow?->status === 'lost')
-                                    {{-- AKO JE IZGUBLJEN --}}
                                     <div class="w-full py-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-500 rounded-xl flex items-center justify-center gap-2">
                                         <i data-lucide="frown" class="w-4 h-4"></i>
                                         <span class="text-[10px] font-black uppercase tracking-widest">Izgubljen</span>
                                     </div>
 
                                 @elseif($tender->workflow?->status === 'rejected')
-                                    {{-- AKO JE ODBIJEN U STARTU (Nismo htjeli raditi) --}}
                                     <div class="w-full py-3 bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-xl flex items-center justify-center gap-2">
                                         <i data-lucide="ban" class="w-4 h-4"></i>
                                         <span class="text-[10px] font-black uppercase tracking-widest">Odbijeno u startu</span>
                                     </div>
 
                                 @else
-                                    {{-- POTPUNO NOV TENDER --}}
                                     <div class="flex gap-3">
-                                        <button wire:click="acceptTender('{{ $tender->id }}')" 
-                                            class="flex-1 bg-blue-600 text-white py-3 rounded-xl text-[10px] font-black uppercase hover:bg-blue-700 transition-all tracking-widest shadow-md">
-                                            Prihvati
-                                        </button>
+                                        {{-- LOGIKA ZA JEDAN ILI VIŠE LOTOVA --}}
+                                        @if($tender->lots->count() > 1)
+                                            <button wire:click="openAcceptModal({{ $tender->id }})" class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center gap-2 transition-all shadow-md text-[10px] font-black uppercase tracking-widest">
+                                                Izaberi
+                                            </button>
+                                        @else
+                                            <button wire:click="acceptSingleLot({{ $tender->id }})" class="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center gap-2 transition-all shadow-md text-[10px] font-black uppercase tracking-widest">
+                                                Prihvati
+                                            </button>
+                                        @endif
+
                                         <button onclick="openRejectModal('{{ $tender->id }}')" 
                                             class="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-500 py-3 rounded-xl text-[10px] font-black uppercase hover:border-rose-600 dark:hover:text-rose-600 dark:hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/5 transition-all tracking-widest">
                                             Odbij
@@ -301,10 +315,35 @@
                         </thead>
                         <tbody class="divide-y divide-slate-200 dark:divide-slate-800/20">
                             @foreach($tender->lots as $lot)
-                            <tr class="hover:bg-white dark:hover:bg-slate-800/20 transition-colors">
-                                <td class="px-6 py-3 text-[10px] font-black text-rose-500 data-mono">0{{ $lot->no ?: '1' }}</td>
-                                <td class="px-4 py-3 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-tight leading-relaxed">{{ str($lot->short_description ?: ($lot->name ?: $tender->name))->limit(120) }}</td>
-                                <td class="px-6 py-3 text-[10px] font-black text-slate-800 dark:text-slate-200 text-right data-mono">{{ number_format($lot->estimated_value, 2, ',', '.') }} KM</td>
+                            @php
+                                $isThisLotAccepted = false;
+                                $isFaded = false;
+                                
+                                if ($isAccepted) {
+                                    if (count($acceptedLots) > 0) {
+                                        $isThisLotAccepted = in_array($lot->id, $acceptedLots);
+                                        $isFaded = !$isThisLotAccepted; 
+                                    } else {
+                                        $isThisLotAccepted = true; 
+                                    }
+                                }
+                            @endphp
+
+                            <tr class="{{ $isFaded ? 'opacity-40 grayscale bg-slate-50/50 dark:bg-transparent' : 'hover:bg-white dark:hover:bg-slate-800/20' }} transition-all duration-300">
+                                <td class="px-6 py-3 text-[10px] font-black {{ $isFaded ? 'text-slate-400' : 'text-rose-500' }} data-mono align-top pt-4">
+                                    0{{ $lot->no ?: '1' }}
+                                    @if($isThisLotAccepted)
+                                        <span class="block mt-2 text-[8px] bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 px-1 py-1 rounded border border-emerald-200 dark:border-emerald-500/20 text-center uppercase tracking-widest shadow-sm">Prihvaćen</span>
+                                    @elseif($isAccepted && !$isThisLotAccepted)
+                                        <span class="block mt-2 text-[8px] bg-slate-100 text-slate-400 dark:bg-slate-800/50 dark:text-slate-500 px-1 py-1 rounded text-center uppercase tracking-widest">Odbačen</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 text-[10px] font-bold {{ $isFaded ? 'text-slate-400 dark:text-slate-600' : 'text-slate-600 dark:text-slate-300' }} uppercase tracking-tight leading-relaxed align-top pt-4">
+                                    {{ str($lot->short_description ?: ($lot->name ?: $tender->name))->limit(120) }}
+                                </td>
+                                <td class="px-6 py-3 text-[10px] font-black {{ $isFaded ? 'text-slate-400 dark:text-slate-600' : 'text-slate-800 dark:text-slate-200' }} text-right data-mono align-top pt-4">
+                                    {{ number_format($lot->estimated_value, 2, ',', '.') }} KM
+                                </td>
                             </tr>
                             @endforeach
                         </tbody>
@@ -318,6 +357,54 @@
     {{-- PAGINATION --}}
     <div class="mt-12">
         {{ $tenders->links('livewire.custom-pagination') }}
+    </div>
+
+    {{-- ========================================== --}}
+    {{-- MODALI (SVI MORAJU BITI VAN PETLJE)        --}}
+    {{-- ========================================== --}}
+
+    {{-- ACCEPT MODAL (Odabir Lotova) --}}
+    <div id="acceptTenderModal" class="fixed inset-0 z-[200] flex items-center justify-center hidden bg-slate-900/40 dark:bg-black/90 backdrop-blur-md">
+        <div class="bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 w-full max-w-2xl mx-4 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            
+            <div class="p-6 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-[#0f172a]">
+                <h3 class="text-slate-900 dark:text-white font-black text-lg uppercase tracking-widest flex items-center gap-3">
+                    <i data-lucide="check-square" class="text-blue-500 w-5 h-5"></i> Odabir Lotova
+                </h3>
+                <button onclick="document.getElementById('acceptTenderModal').classList.add('hidden')" wire:click="$set('acceptingProcedureId', null)" class="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto custom-scrollbar flex-1 bg-white dark:bg-[#1e293b]">
+                <p class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-6 uppercase tracking-wider">Ovaj tender sadrži više lotova. Označite one na kojima želite učestvovati:</p>
+                
+                <div class="space-y-3">
+                    @foreach($availableLots as $lot)
+                        <label for="lot_{{ $lot['id'] }}" class="flex items-start gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer group">
+                            <div class="mt-1">
+                                <input type="checkbox" wire:model="selectedLots" value="{{ $lot['id'] }}" id="lot_{{ $lot['id'] }}" class="w-4 h-4 text-blue-600 bg-slate-100 border-slate-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-slate-800 focus:ring-2 dark:bg-slate-700 dark:border-slate-600 cursor-pointer">
+                            </div>
+                            <div class="flex-1">
+                                {{-- ISPRAVLJEN NAZIV LOTOVA OVDJE --}}
+                                <span class="block text-xs font-black text-rose-500 mb-1 uppercase">Lot {{ $lot['no'] ?? ($lot['lot_number'] ?? $loop->iteration) }}</span> 
+                                <span class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-3 leading-relaxed group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                    {{ \Illuminate\Support\Str::limit($lot['short_description'] ?? ($lot['name'] ?? 'Opšta stavka'), 120) }}
+                                </span>
+                                <span class="inline-flex px-2 py-1 bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-[10px] font-black rounded border border-slate-200 dark:border-slate-800 data-mono">{{ number_format($lot['estimated_value'] ?? 0, 2) }} KM</span>
+                            </div>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+            
+            <div class="p-6 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0f172a] flex justify-end gap-4">
+                <button onclick="document.getElementById('acceptTenderModal').classList.add('hidden')" wire:click="$set('acceptingProcedureId', null)" class="px-6 py-3 text-[10px] font-black text-slate-500 hover:text-slate-900 dark:hover:text-white uppercase transition-colors">Odustani</button>
+                <button wire:click="confirmAccept" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-black uppercase rounded-xl shadow-md transition-all flex items-center gap-2">
+                    <i data-lucide="check" class="w-4 h-4"></i> Potvrdi odabir
+                </button>
+            </div>
+        </div>
     </div>
 
     {{-- BRIEFING ANALYSIS MODAL --}}
@@ -358,18 +445,24 @@
     </div>
 
     {{-- SKRIPTE --}}
+    {{-- SKRIPTE --}}
     <script>
-        const initUI = () => { if (typeof lucide !== 'undefined') lucide.createIcons(); };
-        document.addEventListener('livewire:navigated', initUI);
+        // 1. Deklarišemo globalno
+        window.initUI = () => { if (typeof lucide !== 'undefined') lucide.createIcons(); };
+        
+        // 2. Svuda pozivamo sa window.initUI
+        document.addEventListener('livewire:navigated', window.initUI);
         document.addEventListener('livewire:init', () => { 
-            initUI();
-            Livewire.hook('morph.updated', ({ el, component }) => { initUI(); });
+            window.initUI();
+            Livewire.hook('morph.updated', ({ el, component }) => { window.initUI(); });
+            
             Livewire.on('scroll-top', () => {
                 const container = document.getElementById('main-layout');
                 if (container) { setTimeout(() => { container.scrollTo({ top: 0, behavior: 'smooth' }); }, 50); }
             });
             document.getElementById('analysisModal').addEventListener('click', function(e) { if (e.target === this) closeAnalysisModal(); });
             document.getElementById('rejectModal').addEventListener('click', function(e) { if (e.target === this) closeRejectModal(); });
+            document.getElementById('acceptTenderModal').addEventListener('click', function(e) { if (e.target === this) { this.classList.add('hidden'); @this.set('acceptingProcedureId', null); } });
         });
 
         window.addEventListener('openAnalysisModal', event => {
@@ -396,10 +489,11 @@
                     </div>`;
             });
             document.getElementById('analysisModal').classList.remove('hidden');
-            initUI();
+            window.initUI(); // Promijenjeno i ovdje
         });
 
         function closeAnalysisModal() { document.getElementById('analysisModal').classList.add('hidden'); }
+        
         let currentTenderId = null;
         function openRejectModal(id) { currentTenderId = id; document.getElementById('rejectModal').classList.remove('hidden'); }
         function closeRejectModal() { document.getElementById('rejectModal').classList.add('hidden'); document.getElementById('rejectReason').value = ''; }
@@ -407,6 +501,19 @@
         document.getElementById('confirmRejectBtn').addEventListener('click', () => {
             @this.rejectTender(currentTenderId, document.getElementById('rejectReason').value);
             closeRejectModal();
+        });
+
+        window.addEventListener('open-modal', event => {
+            if (event.detail[0] === 'accept-tender-modal' || event.detail === 'accept-tender-modal') {
+                document.getElementById('acceptTenderModal').classList.remove('hidden');
+                window.initUI(); // Promijenjeno i ovdje
+            }
+        });
+
+        window.addEventListener('close-modal', event => {
+            if (event.detail[0] === 'accept-tender-modal' || event.detail === 'accept-tender-modal') {
+                document.getElementById('acceptTenderModal').classList.add('hidden');
+            }
         });
     </script>
 </div>

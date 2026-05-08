@@ -1,6 +1,9 @@
 <?php
 
+
 namespace App\Livewire\User;
+
+
 
 use App\Models\TenderWorkflow;
 use App\Models\TenderTask;
@@ -42,6 +45,10 @@ class TenderProgress extends Component
     public array $lotPurchasePrices = [];
     public array $lotOfferPrices = [];
 
+    public $jsonFile;
+
+    public array $lotPages = [];
+
     public function mount($id)
     {
         $this->wf = TenderWorkflow::with('tasks')->findOrFail($id);
@@ -49,6 +56,54 @@ class TenderProgress extends Component
         if (!empty($this->wf->ai_parsed_data)) {
             $this->parsedData = $this->wf->ai_parsed_data;
             $this->initArrays();
+        }
+    }
+
+    public function processJson()
+    {
+        ini_set('max_execution_time', 600);
+        set_time_limit(600);
+        ini_set('memory_limit', '1512M');
+
+        $this->validate(['jsonFile' => 'required|max:10240']);
+
+        try {
+            if (!$this->jsonFile) {
+                throw new \Exception("Fajl se još učitava. Molimo pričekajte.");
+            }
+
+            $filePath = $this->jsonFile->getRealPath();
+            if (!$filePath || !is_file($filePath)) {
+                throw new \Exception("Greška pri čitanju JSON fajla.");
+            }
+
+            $content = file_get_contents($filePath);
+            $this->parsedData = json_decode($content, true);
+
+            if ($this->parsedData === null) {
+                throw new \Exception("Neispravan JSON format. Greška: " . json_last_error_msg());
+            }
+
+            $fileHash = md5_file($filePath);
+
+            $this->kreirajTaskoveIzDokumentacije();
+            
+            $this->matchArticlesWithDatabase();
+
+            AiResponseCache::updateOrCreate(
+                ['file_hash' => $fileHash],
+                ['ai_response' => $this->parsedData]
+            );
+
+            $this->wf->update(['ai_parsed_data' => $this->parsedData]);
+            
+            $this->initArrays();
+
+            $this->dispatch('notify', ['type' => 'success', 'message' => "JSON direktno učitan i uspješno mapiran!"]);
+
+        } catch (\Throwable $e) { 
+            Log::error("Greška (processJson): " . $e->getMessage() . " | Linija: " . $e->getLine());
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Greška pri obradi JSON-a: ' . $e->getMessage()]);
         }
     }
 
@@ -136,8 +191,6 @@ class TenderProgress extends Component
                 $ident = $art['ai_match']['selected']['acIdent'];
                 $kol = max(1, floatval($art['kolicina'] ?? 1));
                 
-                // Pošto u bazu spašavamo UKUPNU ponudbenu cijenu za tu količinu,
-                // za katalog nam treba POJEDINAČNA cijena (pa dijelimo sa količinom).
                 $cijenaBroj = isset($art['ai_match']['ponudbena_cijena']) && $art['ai_match']['ponudbena_cijena'] > 0 
                               ? ($art['ai_match']['ponudbena_cijena'] / $kol) 
                               : ($art['ai_match']['selected']['anRTPrice'] ?? 0);
@@ -201,7 +254,7 @@ class TenderProgress extends Component
         $url = "https://pennyshop.ba/assets/photos/product/medium/{$ident}.jpg";
         
         try {
-            $response = Http::timeout(2)->head($url);
+            $response = Http::withoutVerifying()->timeout(2)->head($url);
             if ($response->successful()) {
                 return $url; 
             }
@@ -213,6 +266,11 @@ class TenderProgress extends Component
 
     public function spasiUBazu()
     {
+        if (!empty($this->wf->erp_document_id)) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => "ZABRANJENO: Tender je zaključan i već poslan u ERP!"]);
+            return;
+        }
+
         ini_set('max_execution_time', 300);
         set_time_limit(300);
 
@@ -265,34 +323,40 @@ class TenderProgress extends Component
 
     public function processPdf()
     {
-        set_time_limit(300);
-        ini_set('memory_limit', '512M');
+        set_time_limit(600);
+        ini_set('memory_limit', '1512M');
 
         $this->validate(['pdfFile' => 'required|mimes:pdf|max:20480']);
 
         try {
             $this->progress = 10;
-            $filePath = $this->pdfFile->getRealPath();
-            $fileHash = md5_file($filePath);
 
+            if (!$this->pdfFile) {
+                throw new \Exception("Fajl se još učitava. Molimo pričekajte par sekundi i pokušajte ponovo.");
+            }
+
+            $filePath = $this->pdfFile->getRealPath();
+            
+            if (!$filePath || !is_file($filePath)) {
+                throw new \Exception("Greška: Putanja do PDF fajla nije validna ili fajl ne postoji.");
+            }
+
+            $fileHash = md5_file($filePath);
             $cachedResponse = AiResponseCache::where('file_hash', $fileHash)->first();
 
             if ($cachedResponse) {
                 $this->parsedData = $cachedResponse->ai_response;
-
                 $this->matchArticlesWithDatabase();
-                
                 $this->wf->update(['ai_parsed_data' => $this->parsedData]);
-                $cachedResponse->update(['ai_response' => $this->parsedData]);
-
                 $this->initArrays();
                 $this->kreirajTaskoveIzDokumentacije();
-               
+                
                 $this->progress = 100;
                 $this->dispatch('notify', ['type' => 'success', 'message' => "Učitano iz memorije trenutačno!"]);
                 return; 
             }
 
+            // 1. LOKALNO PARSIRANJE TEKSTA (BRZA METODA)
             $parser = new Parser();
             $pdf = $parser->parseFile($filePath);
             
@@ -301,15 +365,47 @@ class TenderProgress extends Component
                 $text .= $page->getText() . "\n";
             }
 
-            if (empty(trim($text))) {
-                throw new \Exception("PDF nema čitljiv tekst (potreban OCR).");
-            }
-
             $this->progress = 30;
 
-            $isLargeFile = (count($pdf->getPages()) > 15 || strlen($text) > 40000);
-            $selectedModel = $isLargeFile ? 'gpt-4o' : 'gpt-4o-mini';
-            $maxTokens = $isLargeFile ? 10000 : 4000;
+            $isScannerPdf = empty(trim($text));
+            $pageCount = count($pdf->getPages());
+            $textLength = strlen($text);
+            
+            $fileSizeMB = $this->pdfFile->getSize() / 1048576; 
+
+            $selectedModel = ($isScannerPdf || $pageCount > 15 || $fileSizeMB > 3) ? 'gpt-4o' : 'gpt-4o-mini';
+
+            if ($isScannerPdf) {
+                if ($fileSizeMB <= 2) {
+                    $maxTokens = 4000;
+                } elseif ($fileSizeMB <= 4) {
+                    $maxTokens = 8000;
+                } elseif ($fileSizeMB <= 6) {
+                    $maxTokens = 12000;
+                } else {
+                    $maxTokens = 16000; 
+                }
+            } else {
+                if ($textLength < 15000 && $pageCount <= 5) {
+                    $maxTokens = 5000;
+                } elseif ($textLength < 35000 && $pageCount <= 12) {
+                    $maxTokens = 8000;
+                } elseif ($textLength < 70000 && $pageCount <= 25) {
+                    $maxTokens = 12000;
+                } else {
+                    $maxTokens = 16000;
+                }
+            }
+
+            $formatiranaVelicina = round($fileSizeMB, 2);
+            $tipFajla = $isScannerPdf ? 'Skeniran dokument (Slika)' : 'Digitalni PDF';
+            
+            $infoPoruka = "⚙️ {$tipFajla} | Veličina: {$formatiranaVelicina} MB | Odobreno izlaznih tokena: {$maxTokens}";
+            
+            $this->dispatch('notify', [
+                'type' => 'info', 
+                'message' => $infoPoruka
+            ]);
 
             $prompt = "Analiziraj tender za Penny Plus d.o.o. Vrati ISKLJUČIVO JSON objekat.
             STRUKTURA:
@@ -335,11 +431,51 @@ class TenderProgress extends Component
             2. U niz 'potrebni_dokumenti' OBAVEZNO izvuci SAMO dokumente koji čine sekciju 'Obavezan sadržaj ponude' i koje ponuđač mora dostaviti ODMAH u koverti. 
             3. STROGO ZABRANJENO: Ne smiješ u 'potrebni_dokumenti' ubacivati naknadna uvjerenja (iz Poreske uprave, PIO/MIO, Sudova) koja se spominju u tenderu.";
 
-            $response = Http::timeout(240)
+            $messageContent = [
+                ['type' => 'text', 'text' => $prompt]
+            ];
+
+            if ($isScannerPdf) {
+                $this->progress = 40;
+                
+                $fileUpload = Http::withoutVerifying()->timeout(120)
+                    ->withToken(env('OPENAI_API_KEY'))
+                    ->attach('file', file_get_contents($filePath), 'tender.pdf')
+                    ->post('https://api.openai.com/v1/files', [
+                        'purpose' => 'user_data' 
+                    ]);
+
+                if (!$fileUpload->successful()) {
+                    throw new \Exception("OpenAI API je odbio fajl. Greška: " . $fileUpload->body());
+                }
+
+                $fileId = $fileUpload->json('id');
+                
+                $messageContent[] = [
+                    'type' => 'file',
+                    'file' => [
+                        'file_id' => $fileId
+                    ]
+                ];
+                
+                $this->dispatch('notify', ['type' => 'info', 'message' => "Skenirani PDF uočen. Nativna AI vizuelna analiza u toku..."]);
+            } else {
+                $messageContent[] = [
+                    'type' => 'text',
+                    'text' => "\n\nTEKST:\n" . str()->limit($text, 80000)
+                ];
+            }
+
+            $response = Http::withoutVerifying()->timeout(300)
                 ->withToken(env('OPENAI_API_KEY'))
                 ->post('https://api.openai.com/v1/chat/completions', [
                     'model' => $selectedModel,
-                    'messages' => [['role' => 'user', 'content' => $prompt . "\n\nTEKST:\n" . str()->limit($text, 80000)]],
+                    'messages' => [
+                        [
+                            'role' => 'user', 
+                            'content' => $messageContent
+                        ]
+                    ],
                     'response_format' => ['type' => 'json_object'],
                     'max_tokens' => $maxTokens,
                     'temperature' => 0
@@ -371,13 +507,13 @@ class TenderProgress extends Component
                 $this->progress = 100;
                 $this->dispatch('notify', ['type' => 'success', 'message' => "Analiza i mapiranje završeno!"]);
             } else {
-                $this->dispatch('notify', ['type' => 'error', 'message' => "OpenAI Error: " . $response->body()]);
+                throw new \Exception("OpenAI Chat Greška: " . $response->body());
             }
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) { 
             $this->progress = 0;
-            Log::error("Glavna greška: " . $e->getMessage());
-            session()->flash('error', 'Greška pri obradi: ' . $e->getMessage());
+            Log::error("Glavna greška (processPdf): " . $e->getMessage() . " | Linija: " . $e->getLine());
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Greška pri obradi: ' . $e->getMessage()]);
         }
     }
 
@@ -425,7 +561,7 @@ class TenderProgress extends Component
         $allDescriptions = array_values(array_unique($allDescriptions));
 
         try {
-            $response = Http::timeout(60)->post('http://172.16.199.43:5005/api/test', [
+            $response = Http::withoutVerifying()->timeout(300)->post('http://172.16.199.43:5005/api/test', [
                 'descriptions' => $allDescriptions
             ]);
 
@@ -513,7 +649,7 @@ class TenderProgress extends Component
 
             if ($price == 0) {
                 try {
-                    $response = Http::timeout(5)->get('http://172.16.199.43:5005/api/test', [
+                    $response = Http::withoutVerifying()->timeout(5)->get('http://172.16.199.43:5005/api/test', [
                         'ident' => $learned->acIdent
                     ]);
                     if ($response->successful() && !empty($response->json())) {
@@ -593,7 +729,7 @@ class TenderProgress extends Component
         if (empty($identsToFetch)) return;
 
         try {
-            $response = Http::timeout(10)->post('http://172.16.199.43:5005/api/test', [
+            $response = Http::withoutVerifying()->timeout(10)->post('http://172.16.199.43:5005/api/test', [
                 'idents' => array_values($identsToFetch)
             ]);
 
@@ -640,7 +776,7 @@ class TenderProgress extends Component
     {
         if (strlen($query) < 3) return [];
         try {
-            $response = Http::timeout(5)->get('http://172.16.199.43:5005/api/test', ['q' => $query]);
+            $response = Http::withoutVerifying()->timeout(5)->get('http://172.16.199.43:5005/api/test', ['q' => $query]);
             if ($response->successful()) {
                 return $response->json();
             }
@@ -652,6 +788,11 @@ class TenderProgress extends Component
 
     public function updateArticleMatch($type, $index1, $index2, $ident, $name, $percent, $tenderDesc, $anRTPrice = 0, $stockTotal = 0, $stockDetails = [], $anPrice = 0)
     {
+        if (!empty($this->wf->erp_document_id)) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => "ZABRANJENO: Tender je zaključan i već poslan u ERP!"]);
+            return;
+        }
+
         if (is_string($stockDetails)) {
             $stockDetails = json_decode($stockDetails, true) ?? [];
         }
@@ -698,6 +839,181 @@ class TenderProgress extends Component
         $this->dispatch('notify', ['type' => 'success', 'message' => "Sistem je zapamtio mapiranje!"]);
     }
 
+    public function posaljiUErp()
+    {
+        if (!empty($this->wf->erp_document_id)) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => "ZABRANJENO: Tender je zaključan i već poslan u ERP!"]);
+            return;
+        }
+
+        ini_set('max_execution_time', 300);
+        set_time_limit(300);
+
+        $artikliZaErp = [];
+
+        // 1. Skupljanje artikala - GENERALNI DIO
+        if (!empty($this->parsedData['artikli_generalno'])) {
+            foreach ($this->parsedData['artikli_generalno'] as $index => $art) {
+                if (isset($art['ai_match']['selected']['acIdent'])) {
+                    $kolicina = max(1, floatval($art['kolicina'] ?? 1));
+                    
+                    $ukupnaCijena = isset($this->offerPrices[$index]) 
+                        ? floatval($this->offerPrices[$index]) 
+                        : (isset($art['ai_match']['ponudbena_cijena']) ? floatval($art['ai_match']['ponudbena_cijena']) : 0);
+
+                    if ($ukupnaCijena == 0) {
+                        $pojedinacnaCijena = floatval($art['ai_match']['selected']['anPrice'] ?? 0);
+                    } else {
+                        $pojedinacnaCijena = $ukupnaCijena / $kolicina;
+                    }
+
+                    $artikliZaErp[] = [
+                        'acIdent' => $art['ai_match']['selected']['acIdent'],
+                        'anQty'   => $kolicina,
+                        'anPrice' => round($pojedinacnaCijena, 2)
+                    ];
+                }
+            }
+        }
+
+        // 2. Skupljanje artikala - LOTOVI (Samo prihvaćeni)
+        if (!empty($this->parsedData['lotovi'])) {
+            foreach ($this->parsedData['lotovi'] as $index => $lot) {
+                if (!empty($this->sudjelujem[$index])) {
+                    foreach ($lot['artikli'] ?? [] as $artIndex => $art) {
+                        if (isset($art['ai_match']['selected']['acIdent'])) {
+                            $kolicina = max(1, floatval($art['kolicina'] ?? 1));
+                            
+                            $ukupnaCijena = isset($this->lotOfferPrices[$index][$artIndex]) 
+                                ? floatval($this->lotOfferPrices[$index][$artIndex]) 
+                                : (isset($art['ai_match']['ponudbena_cijena']) ? floatval($art['ai_match']['ponudbena_cijena']) : 0);
+
+                            if ($ukupnaCijena == 0) {
+                                $pojedinacnaCijena = floatval($art['ai_match']['selected']['anPrice'] ?? 0);
+                            } else {
+                                $pojedinacnaCijena = $ukupnaCijena / $kolicina;
+                            }
+
+                            $artikliZaErp[] = [
+                                'acIdent' => $art['ai_match']['selected']['acIdent'],
+                                'anQty'   => $kolicina,
+                                'anPrice' => round($pojedinacnaCijena, 2)
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        if (empty($artikliZaErp)) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => "Nema mapiranih artikala za slanje u ERP!"]);
+            return;
+        }
+
+        try {
+            \Illuminate\Support\Facades\DB::connection('pantheon')->beginTransaction();
+
+            // 3. Poziv procedure za kreiranje zaglavlja
+            // U ovom bloku izvršavamo tvoj SQL i uzimamo generisani ključ (@ckey)
+            $sqlZaglavlje = "
+                DECLARE @ckey VARCHAR(13);
+                DECLARE @cdob VARCHAR(100) = '000006';
+                DECLARE @cSkl VARCHAR(100) = 'PENNY PLUS VOGOŠĆA';
+                DECLARE @datumdo DATE = CAST(GETDATE() AS DATE);
+
+                EXEC dbo.pHE_ordercreall '0000', @cdob, @cdob, @cSkl, @datumdo, '0', '', @ckey OUTPUT;
+
+                SELECT @ckey AS document_key;
+            ";
+
+           
+
+            $zaglavljeResult = \Illuminate\Support\Facades\DB::connection('pantheon')->selectOne($sqlZaglavlje);
+
+
+            if (!$zaglavljeResult || empty($zaglavljeResult->document_key)) {
+                throw new \Exception("Pantheon procedura nije uspješno vratila broj dokumenta (@ckey).");
+            }
+
+            $cKey = $zaglavljeResult->document_key;
+
+            // 4. Insertovanje pozicija u novokreirani dokument
+            $redniBroj = 1;
+            $preskoceniArtikli = []; // Ovdje ćemo bilježiti one koji ne postoje
+
+        
+
+            foreach ($artikliZaErp as $stavka) {
+                $ident = (string) $stavka['acIdent'];
+
+                // 4.1. Provjera postojanja i izvlačenje Naziva i JM iz šifarnika
+                $dbArtikal = \Illuminate\Support\Facades\DB::connection('pantheon')
+                    ->table('tHE_SetItem')
+                    ->select('acName', 'acUM') // Izvlačimo naziv i jedinicu mjere
+                    ->where('acIdent', $ident)
+                    ->first();
+
+                if (!$dbArtikal) {
+                    $preskoceniArtikli[] = $ident;
+                    continue; 
+                }
+
+                // 4.2. Upis u tHE_OrderItem sa svim kolonama
+                \Illuminate\Support\Facades\DB::connection('pantheon')->table('tHE_OrderItem')->insert([
+                    'acKey'   => $cKey,
+                    'anNo'    => $redniBroj,
+                    'acIdent' => $ident,
+                    'acName'  => $dbArtikal->acName, // Uzeto iz baze
+                    'acUM'    => $dbArtikal->acUM,   // Uzeto iz baze (JM)
+                    'anQty'   => $stavka['anQty'],
+                    'anPrice' => $stavka['anPrice'], 
+                ]);
+                
+                $redniBroj++;
+            }
+
+            try {
+                \Illuminate\Support\Facades\DB::connection('pantheon')->statement(
+                    "EXEC dbo.pHE_ordergetsum 'P', 'KM', 'KM', '0.01', '0.01', ?, '', '', '', '', '', ''",
+                    [$cKey]
+                );
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::warning("Greška pri obračunu sume za {$cKey}: " . $e->getMessage());
+            }
+
+            \Illuminate\Support\Facades\DB::connection('pantheon')->commit();
+
+            $this->wf->update([
+                'status' => 'completed', 
+                'erp_document_id' => $cKey
+            ]);
+            $this->mount($this->wf->id); 
+
+            $this->dispatch('notify', ['type' => 'success', 'message' => "Kreiran dokument: {$cKey} sa " . count($artikliZaErp) . " pozicija!"]);
+
+            $upisanoKomada = $redniBroj - 1;
+            
+            if (count($preskoceniArtikli) > 0) {
+                $listaPreskocenih = implode(', ', $preskoceniArtikli);
+                $this->dispatch('notify', [
+                    'type' => 'warning', 
+                    'message' => "Dokument {$cKey} kreiran sa {$upisanoKomada} pozicija. Preskočene nepostojeće šifre: {$listaPreskocenih}"
+                ]);
+            } else {
+                $this->dispatch('notify', [
+                    'type' => 'success', 
+                    'message' => "Uspješno kreiran dokument: {$cKey} sa {$upisanoKomada} pozicija!"
+                ]);
+            }
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::connection('pantheon')->rollBack();
+            \Illuminate\Support\Facades\Log::error("ERP Sync Greška: " . $e->getMessage());
+            $this->dispatch('notify', ['type' => 'error', 'message' => "Baza je odbila upis. Greška: " . $e->getMessage()]);
+        }
+    
+    }
+
     private function updateCache()
     {
        if ($this->pdfFile) {
@@ -711,6 +1027,11 @@ class TenderProgress extends Component
         $this->wf->update(['ai_parsed_data' => $this->parsedData]);
     }
 
+    public function setLotPage($lotIndex, $page)
+    {
+        $this->lotPages[$lotIndex] = $page;
+    }
+    
     private function initArrays()
     {
         $this->refreshLivePricesAndStock();
@@ -725,6 +1046,7 @@ class TenderProgress extends Component
 
         if (!empty($this->parsedData['lotovi'])) {
             foreach ($this->parsedData['lotovi'] as $i => $lot) {
+                $this->lotPages[$i] = 1;
                 $this->sudjelujem[$i] = false;
                 $ukupnaNabavnaLota = 0;
                 $this->ponudbene[$i] = isset($lot['ukupna_ponudbena']) ? floatval($lot['ukupna_ponudbena']) : 0;

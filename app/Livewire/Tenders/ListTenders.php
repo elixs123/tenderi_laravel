@@ -21,6 +21,11 @@ class ListTenders extends Component
     public $selectedUser = ''; 
     public $selectedCity = ''; 
 
+    public $acceptingProcedureId = null;
+    public $availableLots = [];
+    public $selectedLots = []; 
+    public $isAcceptingWithoutLots = false; 
+
     protected $listeners = ['scroll-top' => 'handleScrollTop'];
 
     public function handleScrollTop() {
@@ -78,6 +83,77 @@ class ListTenders extends Component
         }
     }
 
+    public function openAcceptModal($procedureId)
+    {
+        $procedure = Procedure::with('lots')->find($procedureId);
+        
+        if (!$procedure) return;
+
+        $this->acceptingProcedureId = $procedureId;
+        $this->availableLots = $procedure->lots->toArray();
+        $this->selectedLots = []; 
+
+        // Ako tender nema lotove, preskačemo modal i nudimo direktno prihvatanje
+        if (count($this->availableLots) === 0) {
+            $this->isAcceptingWithoutLots = true;
+            $this->confirmAccept(); 
+            return;
+        }
+
+        $this->isAcceptingWithoutLots = false;
+        
+        $this->dispatch('open-modal', 'accept-tender-modal'); 
+    }
+
+    public function acceptSingleLot($procedureId)
+    {
+        $procedure = Procedure::with('lots')->find($procedureId);
+        
+        if (!$procedure) return;
+
+        $selectedLots = [];
+        if ($procedure->lots->count() === 1) {
+            $selectedLots = [$procedure->lots->first()->id];
+        }
+
+        TenderWorkflow::updateOrCreate(
+            ['procedure_id' => $procedureId],
+            [
+                'user_id' => auth()->id(),
+                'status' => 'accepted',
+                'reason' => null,
+                'accepted_lots' => $selectedLots
+            ]
+        );
+
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Uspješno preuzet tender!']);
+    }
+
+    public function confirmAccept()
+    {
+        if (!$this->isAcceptingWithoutLots && empty($this->selectedLots)) {
+            $this->dispatch('notify', ['type' => 'warning', 'message' => 'Morate odabrati barem jedan lot!']);
+            return;
+        }
+
+        TenderWorkflow::updateOrCreate(
+            ['procedure_id' => $this->acceptingProcedureId],
+            [
+                'user_id' => auth()->id(),
+                'status' => 'accepted',
+                'reason' => null,
+                'accepted_lots' => $this->selectedLots 
+            ]
+        );
+
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Uspješno preuzet tender/lotovi!']);
+        $this->dispatch('close-modal', 'accept-tender-modal');
+        
+        $this->acceptingProcedureId = null;
+        $this->availableLots = [];
+        $this->selectedLots = [];
+    }
+
     public function updatedSelectedUser() { $this->resetPage(); }
     public function updatedSelectedCity() { $this->resetPage(); }
 
@@ -86,7 +162,7 @@ class ListTenders extends Component
         if (!$authorityId) return;
 
         try {
-            $response = Http::timeout(30)->get("https://open.ejn.gov.ba/LotContracts", [
+            $response = Http::withoutVerifying()->timeout(30)->get("https://open.ejn.gov.ba/LotContracts", [
                 '$filter' => "ContractingAuthorityId eq $authorityId",
                 '$top' => 30
             ]);

@@ -16,8 +16,8 @@ class SyncLots extends Command
 {
     public function handle()
     {
-        $fromDate = Carbon::today()->startOfDay();
-        // $fromDate = Carbon::yesterday()->startOfDay();
+        //$fromDate = Carbon::today()->startOfDay();
+         $fromDate = Carbon::yesterday()->startOfDay();
         $this->info("🚀 Pokrećem TOTALNI sync (Procedure + Lotovi, od: {$fromDate->format('d.m.Y H:i')})...");
 
         $skip = 0;
@@ -115,7 +115,7 @@ class SyncLots extends Command
 
     private function syncLotsForProcedure($procedureId)
     {
-        $response = Http::get("https://open.ejn.gov.ba/LotsBase", [
+        $response = Http::withoutVerifying()->get("https://open.ejn.gov.ba/LotsBase", [
             '$filter' => "ProcedureId eq {$procedureId}"
         ]);
 
@@ -123,7 +123,7 @@ class SyncLots extends Command
             $lots = $response->json('value');
             
             foreach ($lots as $lot) {
-                $linkRes = Http::get("https://open.ejn.gov.ba/LotCpvCodeLinks", [
+                $linkRes = Http::withoutVerifying()->get("https://open.ejn.gov.ba/LotCpvCodeLinks", [
                     '$filter' => "LotId eq {$lot['Id']}"
                 ]);
                 

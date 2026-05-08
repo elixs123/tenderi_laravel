@@ -28,7 +28,7 @@ class SyncTenders extends Command
         while (true) {
             $this->info("📡 Request na Skip: {$skip}...");
             
-            $response = Http::timeout(60)->get("https://open.ejn.gov.ba/Procedures", [
+            $response = Http::withoutVerifying()->timeout(60)->get("https://open.ejn.gov.ba/Procedures", [
                 '$top' => $pageSize,
                 '$skip' => $skip,
                 '$orderby' => 'Announced desc',

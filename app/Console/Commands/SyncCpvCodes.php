@@ -30,7 +30,7 @@ class SyncCpvCodes extends Command
             $this->comment("Pokušavam skinuti paket od skip-a: {$skip}...");
 
             try {
-                $response = Http::timeout(30)->get($url);
+                $response = Http::withoutVerifying()->timeout(30)->get($url);
 
                 if ($response->failed()) {
                     $this->error("❌ Greška pri spajanju na API.");
