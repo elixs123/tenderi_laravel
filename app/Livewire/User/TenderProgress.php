@@ -49,14 +49,36 @@ class TenderProgress extends Component
 
     public array $lotPages = [];
 
+    public $competitorName = '';
+    public $competitorPrice = '';
+
     public function mount($id)
     {
         $this->wf = TenderWorkflow::with('tasks')->findOrFail($id);
+
+        if (!empty($this->parsedData['konkurencija'])) {
+            $this->competitorName = $this->parsedData['konkurencija']['ime'] ?? '';
+            $this->competitorPrice = $this->parsedData['konkurencija']['cijena'] ?? '';
+        }
 
         if (!empty($this->wf->ai_parsed_data)) {
             $this->parsedData = $this->wf->ai_parsed_data;
             $this->initArrays();
         }
+    }
+
+    public function saveCompetitor()
+    {
+        $this->parsedData['konkurencija'] = [
+            'ime' => trim($this->competitorName),
+            'cijena' => floatval($this->competitorPrice)
+        ];
+        
+        $this->wf->update([
+            'ai_parsed_data' => $this->parsedData
+        ]);
+        
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Ishod tendera uspješno zabilježen!']);
     }
 
     public function processJson()
@@ -159,12 +181,30 @@ class TenderProgress extends Component
             if (!in_array($this->wf->status, ['offer_submitted', 'completed'])) {
                 $this->wf->update(['status' => 'documentation_uploaded']);
             }
-        } else {
-            if ($this->wf->status === 'documentation_uploaded') {
-                $this->wf->update(['status' => 'accepted']);
-            }
         }
+
         $this->wf->refresh();
+    }
+
+    public function preskociAi()
+    {
+        $this->parsedData = [
+            'artikli_generalno' => [],
+            'lotovi' => [],
+            'potrebni_dokumenti' => [],
+            'is_lotovi' => false,
+            '_preskocen' => true,
+        ];
+
+        $this->wf->update(['ai_parsed_data' => $this->parsedData]);
+        $this->initArrays();
+        $this->dispatch('notify', ['type' => 'info', 'message' => 'Nastavlja se bez AI analize.']);
+    }
+
+    public function resetAi()
+    {
+        $this->parsedData = null;
+        $this->wf->update(['ai_parsed_data' => null]);
     }
 
     public function toggleLot($index, $lotBroj)
@@ -275,7 +315,7 @@ class TenderProgress extends Component
         set_time_limit(300);
 
         if (!in_array($this->wf->status, ['offer_submitted', 'completed'])) {
-            $this->wf->update(['status' => 'documentation_uploaded']); 
+            $this->wf->update(['status' => 'accepted']); 
         }
 
         if (!empty($this->parsedData['artikli_generalno'])) {
@@ -1154,10 +1194,9 @@ class TenderProgress extends Component
 
             if ($totalTasks > 0 && $totalTasks !== $completedTasks) {
                 $this->dispatch('notify', [
-                    'type' => 'error', 
-                    'message' => "Zabranjeno! Nisu pribavljeni svi obavezni dokumenti iz liste."
+                    'type' => 'warning', 
+                    'message' => "Nisu pribavljeni svi dokumenti, ali nastavljate dalje."
                 ]);
-                return; 
             }
 
             $this->wf->update([

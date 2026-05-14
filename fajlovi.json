@@ -1,0 +1,1811 @@
+{
+    "ugovorni_organ": "Federalno ministarstvo unutrašnjih poslova",
+    "is_lotovi": true,
+    "artikli_generalno": [],
+    "lotovi": [
+        {
+            "broj": "1",
+            "naziv": "VODO MATERIJAL",
+            "vrijednost": 0,
+            "artikli": [
+                {
+                    "opis": "Kudelja",
+                    "jm": "kg",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Firnajz (laneni)",
+                    "jm": "lit",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Zapitna masa-crna katran traka",
+                    "jm": "m",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Spužvasta izolacija 1 1/2\"",
+                    "jm": "m",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Silikon transparentni 280 ml",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Silikon akrilni 280 ml",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Sanitarni silikon 280 ml",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "WC šolja",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Daska za WC šolju tvrđe plastike",
+                    "jm": "kom",
+                    "kolicina": 25
+                },
+                {
+                    "opis": "Nosač za WC dasku metalni",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Guma za WC šolju",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Guma za odvod WC šolje Ø100 simplon",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Vijak sa tiplom za WC šolju",
+                    "jm": "par",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Vodokotlić",
+                    "jm": "kom",
+                    "kolicina": 7
+                },
+                {
+                    "opis": "Plovak za WC kotlić",
+                    "jm": "kom",
+                    "kolicina": 15
+                },
+                {
+                    "opis": "Veze za vodokotlić 3/8\" / 3/8\" 30 cm",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Ispirna cijev ø 30 mm",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Ispirna cijev visoko montažna 40 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Odvodna cijev ø 50 mm",
+                    "jm": "m",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Cijev pocinčana 1/2\" 6m",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "PVC cijev 50/1000 mm",
+                    "jm": "kom",
+                    "kolicina": 7
+                },
+                {
+                    "opis": "Gumice za PVC cijevi 50",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "PVC šelne za cijevi ø 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Filc za izolaciju cijevi",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Nipl 1/2\" pocinčani",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Nipl 1\"",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Nipl 2\"",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Nipl 3/4\"",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Nipl 5/4\"",
+                    "jm": "kom",
+                    "kolicina": 4
+                },
+                {
+                    "opis": "Dupli nipl 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Dupli nipl 3/4\"",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Slavina za veš mašinu",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Dovodno crijevo za veš mašinu",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Odvodno crijevo za veš mašinu",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Protočni bojler 10 litara",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Slavina zidna za protočni bojler",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Pokretna slavina garancija minimalno 3 godine",
+                    "jm": "kom",
+                    "kolicina": 30
+                },
+                {
+                    "opis": "Usadna slavina sa dvije cijevi - garancija minimalno 3 godine",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Usadna slavina sa tri cijevi - garancija minimalno 3 godine",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Baterija jednoručna za kuhinju garancija minimalno 3 godine",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Sifon za sudoper Ø40 mm",
+                    "jm": "kom",
+                    "kolicina": 25
+                },
+                {
+                    "opis": "Tuš baterija garancija minimalno 3 godine",
+                    "jm": "kom",
+                    "kolicina": 15
+                },
+                {
+                    "opis": "Tuš ručica",
+                    "jm": "kom",
+                    "kolicina": 30
+                },
+                {
+                    "opis": "Nosač za tuš ručicu- metalni niklovani",
+                    "jm": "kom",
+                    "kolicina": 20
+                },
+                {
+                    "opis": "Tuš crijevo 1,5m",
+                    "jm": "kom",
+                    "kolicina": 30
+                },
+                {
+                    "opis": "Umivaonik 50 cm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Sifon za umivaonik garancija minimalno 3 godine",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Vijak sa tiplom za umivaonik",
+                    "jm": "par",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Baterija za umivaonik jednoručna",
+                    "jm": "kom",
+                    "kolicina": 4
+                },
+                {
+                    "opis": "Veza za umivaonik 3/8\" na 1/2\" 50 cm",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Sapunjara sa držačem tečnog sapuna - metalni niklovani",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Držač za toaletni papir sa poklopcem - metalni niklovani",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Držač za rolo ručnike metalni niklovani",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Ventil 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Ventil 3/4\"",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Ventil 1\"",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Ventil 2\"",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "EK ventil 1/2\"/3/8\"",
+                    "jm": "kom",
+                    "kolicina": 30
+                },
+                {
+                    "opis": "Sigurnosni ventil ø 1/2\" za bojler",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Sigurnosni ventil 3/4\" do 8 bari",
+                    "jm": "kom",
+                    "kolicina": 4
+                },
+                {
+                    "opis": "Kugl ventil 6/4\"",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Kugl ventil 5/4\"",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Kugl ventil ø 2\"",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Regulacioni ventil za pritisak vode 1 col",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Regulacioni ventil za pritisak vode 5/4 cola",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Spojnica za prespajanje crijeva 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 4
+                },
+                {
+                    "opis": "Spojni holender - klizni 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Klizni holender 3/4\"",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Klizni holender 5/4\"",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Spojni holender - klizni 1\"",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Klizni holender 2\"",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Obrtaj 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 40
+                },
+                {
+                    "opis": "Set klingeritnih dihtunga",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Guma za dihtunge",
+                    "jm": "m2",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Prelaz sa pocinčane cijevi na plastičnu 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 6
+                },
+                {
+                    "opis": "Prelaz sa pocinčane cijevi na plastičnu 3/4\"",
+                    "jm": "kom",
+                    "kolicina": 6
+                },
+                {
+                    "opis": "Cijev plastična (zelena) 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Cijev plastična (zelena) 3/4\"",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "T komad plastični (zeleni) 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "T komad plastični (zeleni) 3/4\"",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Mufna plastična (zelena) 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Mufna plastična (zelena) 3/4\"",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Koljeno plastično (zeleno) 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Koljeno plastično (zeleno) 3/4\"",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Redukcija sa 3/4\" na 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Redukcija sa 1\" na 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Produžetak 1cm 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Teštik pocinčani 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Teštik pocinčani 3/4\"",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Teštik završni 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Mufna pocinčana ø 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Mufna pocinčana ø 1\"",
+                    "jm": "kom",
+                    "kolicina": 4
+                },
+                {
+                    "opis": "PVC račva ø 50/50/90°",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "PVC račva ø 50 45°",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Koljeno 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "PVC koljeno 50/90°",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "PVC koljeno 50/45°",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Sifon za pisoar - niklovani",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Bojler 50 l",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Termostat za bojler od 50l",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Grijač za bojler 50l",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Bojler 80 l",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Termostat za bojler od 80l",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Grijač za bojler 80l",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Grijač za bojler lentheminvest, tip: OWL 500, volumen 500l",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Fleksibilna crijeva za bojler dužine 40-50 cm",
+                    "jm": "par",
+                    "kolicina": 6
+                },
+                {
+                    "opis": "Sajla za pročišćavanje dužine 5 m",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Sajla za pročišćavanje dužine 10 m",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Hidrantsko crijevo 2 cola, dužine 15 m",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Kartuša za baterije",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Sitke za baterije",
+                    "jm": "kom",
+                    "kolicina": 50
+                },
+                {
+                    "opis": "Navojna šipka 3",
+                    "jm": "m",
+                    "kolicina": 4
+                },
+                {
+                    "opis": "WC čučavac",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Klizni holender 6/4",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Plovak za ugradbeni vodokotlić",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Tuš za intimno pranje sa crijevom",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Gumiđetna sa 50 na 40",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Gumiđetna sa 50 na 30",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Produžetak od 2 cm",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Produžetak od 5 cm",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Kroner za bušenje keramike 6 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Kroner za bušenje keramike 8 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                }
+            ]
+        },
+        {
+            "broj": "2",
+            "naziv": "ELEKTRO MATERIJAL",
+            "vrijednost": 0,
+            "artikli": [
+                {
+                    "opis": "Halogene sijalice 300W",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Halogene sijalice 230V-1000W",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Halogene sijalice 150-200W",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Led sijalica E14 5W 4000 K",
+                    "jm": "kom",
+                    "kolicina": 15
+                },
+                {
+                    "opis": "Led sijalica E27 12W 4000 K",
+                    "jm": "kom",
+                    "kolicina": 150
+                },
+                {
+                    "opis": "Led sijalica E27 19W 4000 K",
+                    "jm": "kom",
+                    "kolicina": 15
+                },
+                {
+                    "opis": "Sijalice štedne na ubadanje PL-S 9W/840/2P",
+                    "jm": "kom",
+                    "kolicina": 20
+                },
+                {
+                    "opis": "Sijalice štedne na ubadanje 26W/31-830",
+                    "jm": "kom",
+                    "kolicina": 250
+                },
+                {
+                    "opis": "Neonske sijalice 18W",
+                    "jm": "kom",
+                    "kolicina": 250
+                },
+                {
+                    "opis": "Neonske sijalice 36W",
+                    "jm": "kom",
+                    "kolicina": 150
+                },
+                {
+                    "opis": "Neonske sijalice 58W",
+                    "jm": "kom",
+                    "kolicina": 125
+                },
+                {
+                    "opis": "Prigušnica za neonske sijalice 1x20W",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Starteri za neonke 4-22W",
+                    "jm": "kom",
+                    "kolicina": 300
+                },
+                {
+                    "opis": "Starteri za neonke 4-65W",
+                    "jm": "kom",
+                    "kolicina": 300
+                },
+                {
+                    "opis": "Atestirani produžni kabal sa 5 utičnica 3m dužine sa prekidačem i prenaponskom zaštitom, presjeka 3x1,5",
+                    "jm": "kom",
+                    "kolicina": 20
+                },
+                {
+                    "opis": "Izolir traka 10 m",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Utikač šuko",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Utikač gumirani",
+                    "jm": "kom",
+                    "kolicina": 4
+                },
+                {
+                    "opis": "Utikač keramički",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Utičnica šuko N/Ž",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Utičnica gumena",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Utičnica šuko P/Z",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Utičnica šuko P/Ž sa poklopcem",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Utičnica šuko dupla R/Ž",
+                    "jm": "kom",
+                    "kolicina": 15
+                },
+                {
+                    "opis": "Kabl 1x10 mm2 za uzemljenje (PF 10mm²)",
+                    "jm": "m",
+                    "kolicina": 15
+                },
+                {
+                    "opis": "Kab PPY 3x1,5 mm",
+                    "jm": "m",
+                    "kolicina": 50
+                },
+                {
+                    "opis": "Kabl PPY licnasti 5x2,5 mm",
+                    "jm": "m",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Kabl H07RN-F 3x2,5 mm",
+                    "jm": "m",
+                    "kolicina": 25
+                },
+                {
+                    "opis": "Kabl PGP 3x2,5 mm",
+                    "jm": "m",
+                    "kolicina": 50
+                },
+                {
+                    "opis": "Kabl PGP 4x4 mm",
+                    "jm": "m",
+                    "kolicina": 20
+                },
+                {
+                    "opis": "Kabl PGP 5x2,5 mm",
+                    "jm": "m",
+                    "kolicina": 20
+                },
+                {
+                    "opis": "Kabl PGP 5x4 mm",
+                    "jm": "m",
+                    "kolicina": 20
+                },
+                {
+                    "opis": "Kabl 10mm",
+                    "jm": "m",
+                    "kolicina": 20
+                },
+                {
+                    "opis": "Samokivajuće obujmice 2,5 mm",
+                    "jm": "kom",
+                    "kolicina": 50
+                },
+                {
+                    "opis": "Stopice pocinčane",
+                    "jm": "kom",
+                    "kolicina": 50
+                },
+                {
+                    "opis": "Topivi osigurač (patron) 10A",
+                    "jm": "kom",
+                    "kolicina": 25
+                },
+                {
+                    "opis": "Topivi osigurač (patron) 16A",
+                    "jm": "kom",
+                    "kolicina": 30
+                },
+                {
+                    "opis": "Topivi osigurač (patron) 20A",
+                    "jm": "kom",
+                    "kolicina": 25
+                },
+                {
+                    "opis": "Topivi osigurač (patron) 35A",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Nožasti osigurač (patron) 20A 500W kratki",
+                    "jm": "kom",
+                    "kolicina": 8
+                },
+                {
+                    "opis": "Nožasti osigurač (patron) 35A 500W kratki",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Bužir Ø 25",
+                    "jm": "m",
+                    "kolicina": 20
+                },
+                {
+                    "opis": "Bužir Ø 35",
+                    "jm": "m",
+                    "kolicina": 15
+                },
+                {
+                    "opis": "PVC kanalice za kablove minimalne dimenzije 15x15mm",
+                    "jm": "m",
+                    "kolicina": 25
+                },
+                {
+                    "opis": "PVC kanalice za kablove minimalne dimenzije 20x20mm",
+                    "jm": "m",
+                    "kolicina": 25
+                },
+                {
+                    "opis": "PVC kanalice za kablove minimalne dimenzije 30x17mm",
+                    "jm": "m",
+                    "kolicina": 25
+                },
+                {
+                    "opis": "PVC kanalice za kablove minimalne dimenzije 32x20 mm",
+                    "jm": "m",
+                    "kolicina": 25
+                },
+                {
+                    "opis": "PVC kanalice za kablove minimalne dimenzije 40x20mm",
+                    "jm": "m",
+                    "kolicina": 25
+                },
+                {
+                    "opis": "PVC kanalice za kablove minimalne dimenzije 40x40 mm",
+                    "jm": "m",
+                    "kolicina": 20
+                },
+                {
+                    "opis": "Unutarnja koljena za kanalicu minimalne dimenzije 32x20 mm",
+                    "jm": "kom",
+                    "kolicina": 25
+                },
+                {
+                    "opis": "Vanjska koljena za kanalicu minimalne dimenzije 32x20 mm",
+                    "jm": "kom",
+                    "kolicina": 25
+                },
+                {
+                    "opis": "Završeci za kanalice minimalne dimenzije 32x20 mm",
+                    "jm": "kom",
+                    "kolicina": 25
+                },
+                {
+                    "opis": "L član za kanalice 32x20 mm",
+                    "jm": "kom",
+                    "kolicina": 25
+                },
+                {
+                    "opis": "T član za kanalice 17x30 mm",
+                    "jm": "kom",
+                    "kolicina": 25
+                },
+                {
+                    "opis": "Prekidač P/Ž serijski",
+                    "jm": "kom",
+                    "kolicina": 20
+                },
+                {
+                    "opis": "Prekidač N/Ž serijski",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Prekidač izmjenični",
+                    "jm": "kom",
+                    "kolicina": 20
+                },
+                {
+                    "opis": "Prekidač naizmjenični N/Z",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Prekidač jednopolni P/Ž",
+                    "jm": "kom",
+                    "kolicina": 20
+                },
+                {
+                    "opis": "Prekidač jednopolni N/Z",
+                    "jm": "kom",
+                    "kolicina": 20
+                },
+                {
+                    "opis": "KIP prekidač za bojler",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "OG prekidač (nadžbuk) za bojler 16A",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Grlo porcelansko E-14",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Grlo porcelansko E-27",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Automatski osigurači-10A",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Automatski osigurači-16A",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Automatski osigurači-20A",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Automatski osigurači-tropolni 32A C karakteristika",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Led panel 60x60 nadgradni 45W 4000 K",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Led panel 120x30 nadgradni 45W 4000 K",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Poklopci za instalacione kutije",
+                    "jm": "kom",
+                    "kolicina": 15
+                },
+                {
+                    "opis": "Redne stezaljke 1,5 mm",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Redne stezaljke 2,5 mm",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Redne stezaljke 4 mm",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Redne stezaljke 16 mm",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "OG razvodna kutija IP 55 80x80",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "OG razvodna kutija 100x100 sa 6 uvodnica",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Ispitivač za struju",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Plinski spremnik (uložak) 190 gr",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Elektroda 2,5 mm",
+                    "jm": "kg",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "FID zaštitna sklopka 4-polna 6 kA 63A 300mA TIP AS",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Led panik rasvjeta (nadgradna) 220 V 4W",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "DPX 125 63A zaštitna sklopka 400V",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Kupaonski ventilator 15/20W 230V, ugradbeni 100 mm",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Prigušnica mehanička za flou cijevi 36/40w",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Prekidač unakrsni podžbukni",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Utikač trofazni",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Digitalni instrument-multimetar-unimer",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Krimp kliješta za hilzne, stopice-tuljke sa setom 0,5mm2-10mm2",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Led reflektor 20W 230V IP65",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Led driver 24V 100W",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Nožasti osigurač 80A",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Nožasti osigurač 100A",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Nožasti osigurač 160A",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Nožasti osigurač 200A",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Nožasti osigurač 250A",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Led panel nadgradni, okrugli 24W, 4000K",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Led driver 12V 200W",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Grebenasta sklopka 3P/63A/0-1",
+                    "jm": "kom",
+                    "kolicina": 1
+                }
+            ]
+        },
+        {
+            "broj": "3",
+            "naziv": "GRAĐEVINSKI I DRUGI MATERIJAL",
+            "vrijednost": 0,
+            "artikli": [
+                {
+                    "opis": "Ekseri 2",
+                    "jm": "kg",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Ekseri 3",
+                    "jm": "kg",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Ekseri 7",
+                    "jm": "kg",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Ekseri 8",
+                    "jm": "kg",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Ekseri 10",
+                    "jm": "kg",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Ekseri čelični 5",
+                    "jm": "kg",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Cement 50/1 kg",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Gips 1/1",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Poludisperziona boja - bijela 5l",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Masa za gletovanje",
+                    "jm": "kg",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Fug masa (bijela) 1/1 kg",
+                    "jm": "kg",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Gotovi malter za fino malterisanje 25kg",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Ljepilo za unutrašnju keramiku 5 kg",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Keramičko ljepilo za vanjsku upotrebu fleksibilno 25 kg",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Automat za aluminijska vrata168x19 mm (težina vrata do 85 kg)",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Špahtla-lopatica metal 40mm",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Špahtla-lopatica metal 100mm",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Kist drvena drška 35 mm standard",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Kist drvena drška 50mm",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Kist drvena drška 100mm",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Valjak tekstil 10cm",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Valjak tekstil 25cm",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Uložak za valjak tekstil 10cm",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Uložak za valjak tekstil 25cm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Šarafi za drvo 3,5x18 mm",
+                    "jm": "kom",
+                    "kolicina": 1000
+                },
+                {
+                    "opis": "Šarafi za drvo 3,5x35 mm",
+                    "jm": "kom",
+                    "kolicina": 200
+                },
+                {
+                    "opis": "Šarafi za drvo 3,5x40 mm",
+                    "jm": "kom",
+                    "kolicina": 100
+                },
+                {
+                    "opis": "Šarafi za drvo 4,5x18 mm",
+                    "jm": "kom",
+                    "kolicina": 500
+                },
+                {
+                    "opis": "Šarafi za drvo 4,5x20 mm",
+                    "jm": "kom",
+                    "kolicina": 100
+                },
+                {
+                    "opis": "Šarafi za drvo 5x30 mm",
+                    "jm": "kom",
+                    "kolicina": 100
+                },
+                {
+                    "opis": "Šarafi za drvo 5x50 mm",
+                    "jm": "kom",
+                    "kolicina": 100
+                },
+                {
+                    "opis": "Šarafi za drvo 6x80 mm",
+                    "jm": "kom",
+                    "kolicina": 100
+                },
+                {
+                    "opis": "Šarafi sa tiplovima 6x40 mm",
+                    "jm": "kom",
+                    "kolicina": 50
+                },
+                {
+                    "opis": "Šarafi sa tiplovima 6x80 mm",
+                    "jm": "kom",
+                    "kolicina": 50
+                },
+                {
+                    "opis": "Šarafi sa tiplovima 8x80 mm",
+                    "jm": "kom",
+                    "kolicina": 50
+                },
+                {
+                    "opis": "Šarafi sa tiplovima 8x100 mm",
+                    "jm": "kom",
+                    "kolicina": 50
+                },
+                {
+                    "opis": "Šarafi sa tiplovima 8x120 mm",
+                    "jm": "kom",
+                    "kolicina": 50
+                },
+                {
+                    "opis": "Ručice za ormare metal 96 mm",
+                    "jm": "kom",
+                    "kolicina": 100
+                },
+                {
+                    "opis": "Bravice za ormare (razne)",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Poluolive za prozore",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Brava za vrata 6 cm",
+                    "jm": "kom",
+                    "kolicina": 50
+                },
+                {
+                    "opis": "Brava za vrata 8 cm",
+                    "jm": "kom",
+                    "kolicina": 25
+                },
+                {
+                    "opis": "Kvaka za vrata",
+                    "jm": "kom",
+                    "kolicina": 50
+                },
+                {
+                    "opis": "Štit za vrata",
+                    "jm": "kom",
+                    "kolicina": 50
+                },
+                {
+                    "opis": "Okov za vrata \"L\"",
+                    "jm": "kom",
+                    "kolicina": 20
+                },
+                {
+                    "opis": "Baglama za vrata",
+                    "jm": "kom",
+                    "kolicina": 20
+                },
+                {
+                    "opis": "Cilindar za bravu",
+                    "jm": "kom",
+                    "kolicina": 60
+                },
+                {
+                    "opis": "Katanac",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Farba raznih boja 0,75l",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Lak za drvo uljani 0,75l",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Lak za metal nitro 0,75l",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Lak za metal uljani 0,75l",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Sadolin 0,75l",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Temeljna boja",
+                    "jm": "kg",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Nitro razredživač 1/1",
+                    "jm": "lit",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Uljani razredživač 1/1",
+                    "jm": "lit",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Antikorozivno sredstvo",
+                    "jm": "lit",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Kit za drvo 0,75",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Pištoljska pur pjena 750 ml",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Univerzalno ljepilo 3 g",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Ljepilo za drvo",
+                    "jm": "kg",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Kontakt sprej 400 ml.",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Sprej lak 400 ml. raznih boja",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Kist radijatorski 35 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Radijatorski ravni ventil 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Radijatorski podventil ravni 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Radijatorski kutni ventil 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Radijatorski podventil kutni 1/2\"",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Bijeli lak za radijatore 0,75l",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Građevinska žica 1mm",
+                    "jm": "kg",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Građevinska žica 3mm",
+                    "jm": "kg",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Letva 5x8 cm",
+                    "jm": "m3",
+                    "kolicina": 0.5
+                },
+                {
+                    "opis": "Flah pljosnato željezo 3x30x6000 mm",
+                    "jm": "kom",
+                    "kolicina": 10
+                },
+                {
+                    "opis": "Lak za drvo bijeli 0,75l",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Lak za drvo zeleni 0,75l",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Brusni papir na platnu granulacija 1000",
+                    "jm": "m2",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Baglame za drvene ormare",
+                    "jm": "kom",
+                    "kolicina": 100
+                },
+                {
+                    "opis": "L profili za vrata 100x100mm",
+                    "jm": "kom",
+                    "kolicina": 50
+                },
+                {
+                    "opis": "Ploče betonske dimenzija 40x40x50mm",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Turban šaraf m4, 6x30 mm sa podloškom i maticom",
+                    "jm": "kom",
+                    "kolicina": 200
+                },
+                {
+                    "opis": "Pištolj za pur pjenu",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Turban šaraf m4, 6x100 mm sa podloškom i maticom",
+                    "jm": "kom",
+                    "kolicina": 100
+                },
+                {
+                    "opis": "Termo boja za unutrašnje zidove od 5 litara",
+                    "jm": "kom",
+                    "kolicina": 2
+                }
+            ]
+        },
+        {
+            "broj": "4",
+            "naziv": "ALATI",
+            "vrijednost": 0,
+            "artikli": [
+                {
+                    "opis": "Bonsek",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Bonsek plata",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Rezna ploča 115 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Rezna ploča za metal 230 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Nastavak za bušilicu krstasti",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Nastavak za bušilicu ravni",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za metal 3 mm",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Borer za metal 4 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za metal 5 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za metal 6 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za metal 8 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za metal 10 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za metal 12 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za beton 3 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za beton 4 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za beton 6 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za beton 8 mm",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Borer za beton 10 mm",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Borer za beton 12 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za beton 14 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za drvo 3 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za drvo 4 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za drvo 5 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za drvo 6 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za drvo 7 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za drvo 8 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Borer za drvo 10 mm",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Kliješta papagajke 1 col",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Izvijači ravni garnitura (6-10 mm)",
+                    "jm": "kompl",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Izvijač krstasti garnitura (6-10 mm)",
+                    "jm": "kompl",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Skalpel",
+                    "jm": "kom",
+                    "kolicina": 2
+                },
+                {
+                    "opis": "Čekić 0,50 kg",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Čekić 1 kg",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Grablje metalne sa držalom",
+                    "jm": "kom",
+                    "kolicina": 3
+                },
+                {
+                    "opis": "Francuski ključ",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Kofer za alat aluminijski",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Kliješta za pop nitne",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Siluk za trimer 3 mm",
+                    "jm": "kom",
+                    "kolicina": 20
+                },
+                {
+                    "opis": "Akumulatorska bušilica sa dvije baterije i punjačem 18V/2Ah sa dvije brzine",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Ugaona kutna brusilica (mala)",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Nož plata za ubodnu pilu 10 komada",
+                    "jm": "pak",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Nož za cirkular (ručni) 180 mm",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Akumulatorksa bušilica sa čekićem",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Majzlo za veliku mašinu štemalicu",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Borer 6 mm od 30-40 cm",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Borer 7 mm od 30-40 cm",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Borer 10 mm od 30-40 cm",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Gletarica metalna 28x13 cm",
+                    "jm": "kom",
+                    "kolicina": 1
+                },
+                {
+                    "opis": "Gume sa osovinama za građevinska kolica",
+                    "jm": "kom",
+                    "kolicina": 5
+                },
+                {
+                    "opis": "Varilica za plastične cijevi",
+                    "jm": "kom",
+                    "kolicina": 1
+                }
+            ]
+        }
+    ],
+    "potrebni_dokumenti": [],
+    "ai_uprava": {
+        "sazetak": "Informativna ponuda za nabavku vodo, elektro, građevinskog materijala i alata za potrebe održavanja tokom 2026. godine. U pitanju je standardna isporuka roba široke potrošnje i ne zahtijevaju se posebne niti složene administrativne procedure izvan uobičajene dostave ponude.",
+        "rizik_nivo": "NIZAK",
+        "rizik_razlog": "Standardna nabavka potrošnog materijala i alata bez skrivenih uvjeta, specifičnih zahtjeva ili penalnih drakonskih klauzula."
+    }
+}

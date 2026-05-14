@@ -11,6 +11,7 @@ use Livewire\WithPagination;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Http\Client\Pool;
 
 class ListTenders extends Component
 {
@@ -18,13 +19,18 @@ class ListTenders extends Component
 
     public $search = '';
     public $filter = 'all';
-    public $selectedUser = ''; 
-    public $selectedCity = ''; 
+    public $sort = 'announced';
+    public $selectedUser = '';
+    public $selectedCity = '';
 
     public $acceptingProcedureId = null;
     public $availableLots = [];
     public $selectedLots = []; 
     public $isAcceptingWithoutLots = false; 
+
+    public $wonTenderId = null;
+    public $wonPrice = '';
+    public $wonSupplier = '';
 
     protected $listeners = ['scroll-top' => 'handleScrollTop'];
 
@@ -53,6 +59,18 @@ class ListTenders extends Component
         );
     }
 
+   public function saveWinner($workflowId, $supplier, $price)
+    {
+        $workflow = \App\Models\TenderWorkflow::find($workflowId);
+        if ($workflow) {
+            $workflow->update([
+                'winner_supplier' => $supplier ?: null,
+                'final_price'     => $price ?: null,
+            ]);
+        }
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'Snimljeno!']);
+    }
+
     public function rejectTender($procedureId, $reason)
     {
         if (empty($reason)) return;
@@ -78,8 +96,57 @@ class ListTenders extends Component
     public function markAsLost($workflowId)
     {
         $workflow = \App\Models\TenderWorkflow::find($workflowId);
-        if($workflow) {
-            $workflow->update(['status' => 'lost']);
+        if (!$workflow) return;
+
+        $workflow->update(['status' => 'lost']);
+
+        try {
+            // API ne vraća pobjednika direktno — mora se ići kroz aukcije (radi samo za e-aukcije)
+            $auctionRes = Http::withoutVerifying()->timeout(10)->get('https://open.ejn.gov.ba/Auctions', [
+                '$filter' => "ProcedureId eq {$workflow->procedure_id} and Status eq 'Completed'",
+                '$top' => 1,
+            ]);
+
+            $auction = $auctionRes->json('value.0') ?? null;
+            if (!$auction) return; // nije e-aukcija, ručni unos ostaje
+
+            $partRes = Http::withoutVerifying()->timeout(10)->get('https://open.ejn.gov.ba/AuctionParticipations', [
+                '$filter' => "AuctionId eq {$auction['Id']}",
+            ]);
+
+            $winner = collect($partRes->json('value') ?? [])->sortBy('FinalIndex')->first();
+            if (!$winner) return;
+
+            $finalPrice = $winner['FinalIndex'] ?? null;
+            $sgId = $winner['SupplierGroupId'] ?? null;
+            $supplierName = null;
+
+            if ($sgId) {
+                $linkRes = Http::withoutVerifying()->timeout(5)->get('https://open.ejn.gov.ba/SupplierGroupSupplierLinks', [
+                    '$filter' => "SupplierGroupId eq {$sgId}",
+                ]);
+                $supplierId = collect($linkRes->json('value') ?? [])->sortByDesc('IsLead')->first()['SupplierId'] ?? null;
+
+                if ($supplierId) {
+                    $local = DB::table('suppliers')->where('supplier_id', $supplierId)->first();
+                    $supplierName = $local ? $local->name : null;
+
+                    if (!$supplierName) {
+                        $supRes = Http::withoutVerifying()->timeout(5)->get("https://open.ejn.gov.ba/SuppliersBase/{$supplierId}");
+                        $supplierName = $supRes->json('Name') ?? null;
+                    }
+                }
+            }
+
+            if ($supplierName || $finalPrice) {
+                $workflow->update([
+                    'winner_supplier' => Str::upper($supplierName ?? ''),
+                    'final_price'     => $finalPrice,
+                ]);
+                $this->dispatch('notify', ['type' => 'info', 'message' => 'Pobjednik automatski povučen: ' . ($supplierName ?? 'N/A')]);
+            }
+        } catch (\Exception $e) {
+            // tiho — ručni unos ostaje dostupan
         }
     }
 
@@ -157,52 +224,135 @@ class ListTenders extends Component
     public function updatedSelectedUser() { $this->resetPage(); }
     public function updatedSelectedCity() { $this->resetPage(); }
 
-    public function analyzeMarket($authorityId)
+    public function analyzeMarket($authorityId, $tenderId = null)
     {
         if (!$authorityId) return;
 
         try {
-            $response = Http::withoutVerifying()->timeout(30)->get("https://open.ejn.gov.ba/LotContracts", [
-                '$filter' => "ContractingAuthorityId eq $authorityId",
-                '$top' => 30
-            ]);
+            $currentTender = Procedure::find($tenderId);
+            $authorityName = $currentTender ? $currentTender->contracting_authority_name : 'Ugovorni Organ';
 
-            $lots = $response->json('value') ?? [];
-            $analiza = collect();
-            $ukupnaSuma = 0;
+            // 1. Povlačimo ZAVRŠENE AUKCIJE za ovaj ugovorni organ
+            $auctionsResponse = Http::withoutVerifying()
+                ->timeout(15)
+                ->get("https://open.ejn.gov.ba/Auctions", [
+                    '$filter' => "ContractingAuthorityId eq $authorityId and Status eq 'Completed'",
+                    '$orderby' => "StartDateTime desc",
+                    '$top' => 15 
+                ]);
 
-            foreach ($lots as $item) {
-                $v = (float) ($item['Value'] ?? $item['ContractValueVatExcluded'] ?? 0);
-                $rawNaziv = $item['ProcedureName'] ?? "OSTALO";
-                
-                $cistiNaziv = preg_replace('/NABAVKA|ZA POTREBE|POTREBE|JU DOM|DIREKTNI|SPORAZUM|OKVIRNI/i', '', $rawNaziv);
-                $cistiNaziv = Str::upper(trim(preg_replace('/\d+\/\d+/', '', $cistiNaziv)));
-
-                $match = DB::table('suppliers')->whereRaw('? LIKE CONCAT(\'%\', name, \'%\')', [$rawNaziv])->first();
-                $prikaznoIme = $match ? Str::upper($match->name) : $cistiNaziv;
-
-                if (!$analiza->has($prikaznoIme)) {
-                    $analiza->put($prikaznoIme, [
-                        'ime' => $prikaznoIme, 
-                        'ukupno' => 0, 
-                        'brojUgovora' => 0, 
-                        'is_firma' => (bool)$match
-                    ]);
-                }
-
-                $current = $analiza->get($prikaznoIme);
-                $current['ukupno'] += $v;
-                $current['brojUgovora'] += 1;
-                $analiza->put($prikaznoIme, $current);
-                $ukupnaSuma += $v;
+            if (!$auctionsResponse->successful()) throw new \Exception('Auctions API nije dostupan');
+            
+            $auctions = collect($auctionsResponse->json('value') ?? []);
+            if ($auctions->isEmpty()) {
+                 $this->dispatch('notify', ['type' => 'info', 'message' => 'Nema završenih e-aukcija za ovaj organ.']);
+                 return;
             }
 
+            $competitors = collect();
+            $recentContracts = [];
+            $totalSuma = 0;
+
+            foreach ($auctions as $auction) {
+                $auctionId = $auction['Id'];
+                $procName = $auction['ProcedureName'] ?? $auction['LotName'] ?? 'Nedefinisan naziv';
+                $awardDate = $auction['StartDateTime'] ?? now()->toIso8601String(); 
+
+                // 2. Povlačimo UČEŠĆA (Participations) za ovu aukciju
+                $partRes = Http::withoutVerifying()->get("https://open.ejn.gov.ba/AuctionParticipations", [
+                    '$filter' => "AuctionId eq $auctionId"
+                ]);
+                
+                $participations = collect($partRes->json('value') ?? []);
+                
+                if ($participations->isNotEmpty()) {
+                    // Pobjednik je onaj sa najnižom cijenom na kraju
+                    $winnerPart = $participations->sortBy('FinalIndex')->first();
+                    
+                    $initial = (float) $winnerPart['InitialIndex'];
+                    $final = (float) $winnerPart['FinalIndex']; 
+                    $pad = $initial > 0 ? (($initial - $final) / $initial) * 100 : 0;
+                    
+                    $auctionData = [
+                        'initial' => $initial,
+                        'final' => $final,
+                        'pad_procenat' => round($pad, 2)
+                    ];
+                    
+                    // Već imamo SupplierGroupId od pobjednika aukcije!
+                    $sgId = $winnerPart['SupplierGroupId'];
+                    $supplierName = 'Nepoznat Dobavljač';
+                    $actualSupplierId = null;
+
+                    // 3. Idemo direktno u LINKS da nađemo pravi SupplierId (onog ko je Lead)
+                    if ($sgId) {
+                        $linksRes = Http::withoutVerifying()->get("https://open.ejn.gov.ba/SupplierGroupSupplierLinks", [
+                            '$filter' => "SupplierGroupId eq $sgId"
+                        ]);
+
+                        if ($linksRes->successful() && !empty($linksRes->json('value'))) {
+                            $linkData = collect($linksRes->json('value'))->sortByDesc('IsLead')->first();
+                            $actualSupplierId = $linkData['SupplierId'];
+                        }
+                    }
+
+                    // 4. Vadimo tačno ime iz tvoje LOKALNE BAZE!
+                    if ($actualSupplierId) {
+                        $localSupplier = \Illuminate\Support\Facades\DB::table('suppliers')
+                            ->where('supplier_id', $actualSupplierId)
+                            ->first();
+
+                        if ($localSupplier) {
+                            $supplierName = $localSupplier->name;
+                        } else {
+                            // FALLBACK API ako nije u lokalnoj bazi
+                            $supRes = Http::withoutVerifying()->get("https://open.ejn.gov.ba/SuppliersBase/$actualSupplierId");
+                            if ($supRes->successful()) {
+                                $supplierName = $supRes->json('Name') ?? 'Nepoznat Dobavljač';
+                            }
+                        }
+                    }
+
+                    $supplierName = \Illuminate\Support\Str::upper($supplierName);
+
+                    // 5. Dodajemo u Top Konkurenciju
+                    if ($final > 0) {
+                        if (!$competitors->has($supplierName)) {
+                            $competitors->put($supplierName, ['supplier_name' => $supplierName, 'total_value' => 0, 'contracts_count' => 0]);
+                        }
+                        $current = $competitors->get($supplierName);
+                        $current['total_value'] += $final;
+                        $current['contracts_count'] += 1;
+                        $competitors->put($supplierName, $current);
+                        
+                        $totalSuma += $final;
+                    }
+
+                    // 6. Dodajemo u desnu kolonu modala (Zadnji ugovori)
+                    if (count($recentContracts) < 10) {
+                        $recentContracts[] = [
+                            'ProcedureName' => $procName,
+                            'SupplierName' => $supplierName,
+                            'ContractValue' => $final,
+                            'AwardDate' => $awardDate,
+                            'Auction' => $auctionData
+                        ];
+                    }
+                }
+            }
+
+            $topCompetitors = $competitors->sortByDesc('total_value')->take(5)->values()->all();
+
             $this->dispatch('openAnalysisModal', [
-                'data' => $analiza->values()->sortByDesc('ukupno')->take(10)->values()->all(),
-                'total' => $ukupnaSuma
+                'authorityName' => \Illuminate\Support\Str::upper($authorityName),
+                'topCompetitors' => $topCompetitors,
+                'recentContracts' => $recentContracts,
+                'totalValue' => $totalSuma,
+                'totalContracts' => count($auctions) 
             ]);
+
         } catch (\Exception $e) {
-            $this->dispatch('notify', ['type' => 'error', 'message' => 'Greška pri analizi tržišta.']);
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Greška pri analizi: ' . $e->getMessage()]);
         }
     }
 
@@ -228,9 +378,13 @@ class ListTenders extends Component
             });
         }
 
-        // 2. Filter za današnje objave
+        // 2. Filteri
         if ($this->filter === 'today') {
             $query->whereDate('announced', now()->toDateString());
+        } elseif ($this->filter === 'week') {
+            $query->whereHas('lots', function ($q) {
+                $q->whereBetween('application_deadline_date_time', [now(), now()->addDays(7)]);
+            });
         }
 
         if ($isAdmin) {
@@ -277,8 +431,16 @@ class ListTenders extends Component
         $cities = Procedure::whereNotNull('contracting_authority_city_name')->distinct()->pluck('contracting_authority_city_name');
         $referents = \App\Models\User::where('role', 'employee')->get();
 
+        $orderedQuery = $query->withSum('lots', 'estimated_value');
+
+        if ($this->sort === 'deadline') {
+            $orderedQuery->orderByRaw('(SELECT MIN(application_deadline_date_time) FROM lots WHERE lots.procedure_id = procedures.id) ASC NULLS LAST');
+        } else {
+            $orderedQuery->orderBy('announced', 'desc');
+        }
+
         return view('livewire.tenders.list-tenders', [
-            'tenders' => $query->withSum('lots', 'estimated_value')->orderBy('announced', 'desc')->paginate(10),
+            'tenders' => $orderedQuery->paginate(10),
             'totalValue' => $currentTotalValue,
             'authoritiesCount' => $currentAuthoritiesCount,
             'todayCount' => $todayCount, 

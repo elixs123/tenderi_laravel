@@ -15,17 +15,6 @@ use Illuminate\Support\Facades\Notification;
 
 Route::get('/login', Login::class)->name('login')->middleware('guest');
 
-Route::get('/cpv-pregled', function () {
-    $kodovi = CpvCode::all();
-    
-    $output = "<h1>Lista CPV Kodova</h1><hr>";
-    foreach ($kodovi as $k) {
-        $output .= "<b>{$k->code}</b> - {$k->description}<br> - Root: {$k->root_description}<br>";
-    }
-    
-    return response($output);
-});
-
 Route::middleware('auth')->group(function () {
     Route::post('/logout', function (Illuminate\Http\Request $request) {
         Illuminate\Support\Facades\Auth::logout();

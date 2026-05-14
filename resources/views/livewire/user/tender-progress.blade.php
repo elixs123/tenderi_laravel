@@ -91,70 +91,93 @@
                         <span class="bg-white dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 w-10 h-10 rounded-xl flex items-center justify-center text-sm border border-indigo-200 dark:border-indigo-500/30 shadow-sm dark:shadow-inner">
                             <i class="fa-solid fa-brain"></i>
                         </span> 
-                        Centar za AI Odluke
+                         Centar za AI Odluke
                     </h3>
+
+                    {{-- FIX: $imaTenderPodatke definisana OVDJE, prije prvog korištenja --}}
+                    @php
+                        $imaTenderPodatke = !empty($parsedData) && (
+                            (isset($parsedData['artikli_generalno']) && !empty($parsedData['artikli_generalno'])) || 
+                            (isset($parsedData['lotovi']) && !empty($parsedData['lotovi'])) || 
+                            isset($parsedData['_preskocen'])
+                        );
+                    @endphp
+
+                    @if($imaTenderPodatke && isset($parsedData['_preskocen']))
+                    <button wire:click="resetAi" class="flex items-center gap-2 px-4 py-2 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase rounded-xl border border-indigo-200 dark:border-indigo-500/30 hover:bg-indigo-200 transition-all">
+                        <i class="fa-solid fa-upload"></i> Uploaduj PDF
+                    </button>
+                    @endif
                 </div>
 
-                {{-- FORMA ZA UPLOAD --}}
-                @if(!$parsedData)
-                <div class="bg-white dark:bg-slate-900/50 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-6 items-start justify-between shadow-sm dark:shadow-none transition-colors">
-                    <div class="flex-1">
-                        <p class="text-slate-800 dark:text-slate-300 text-sm font-bold mb-2 transition-colors">Ubacite PDF Tendersku dokumentaciju</p>
-                        <p class="text-slate-500 text-xs italic">AI će analizirati artikle i potrebne garancije.</p>
-                        
-                        @if (session()->has('error'))
-                            <div class="mt-3 p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs rounded-xl font-mono transition-colors">
-                                <i class="fa-solid fa-triangle-exclamation mr-1"></i> {{ session('error') }}
-                            </div>
-                        @endif
-                    </div>
+                @if(!$imaTenderPodatke)
+                <div class="bg-white dark:bg-slate-900/50 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 flex flex-col gap-6 shadow-sm dark:shadow-none transition-colors">
                     
-                    <div class="w-full md:w-auto">
-                        {{-- 1. GLAVNI UPLOAD ZA PDF (OPENAI) --}}
-                        <form wire:submit.prevent="processPdf" class="flex flex-col sm:flex-row items-center gap-4">
-                            <div class="relative w-full">
-                                <input type="file" wire:model="pdfFile" accept=".pdf" 
-                                    class="block w-full text-[10px] text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:bg-indigo-100 dark:file:bg-indigo-600/20 file:text-indigo-700 dark:file:text-indigo-400 hover:file:bg-indigo-200 dark:hover:file:bg-indigo-600/30 transition-all cursor-pointer">
-                                <div wire:loading wire:target="pdfFile" class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-white dark:bg-slate-900 px-2 py-1 rounded border border-slate-200 dark:border-transparent">
-                                    <i class="fa-solid fa-circle-notch fa-spin text-indigo-500 dark:text-indigo-400 text-xs"></i> 
-                                    <span class="text-[9px] text-indigo-600 dark:text-indigo-300 font-bold uppercase tracking-widest">Spremam...</span>
+                    <div class="flex flex-col md:flex-row gap-6 items-start justify-between">
+                        <div class="flex-1">
+                            <p class="text-slate-800 dark:text-slate-300 text-sm font-bold mb-2 transition-colors">Ubacite PDF Tendersku dokumentaciju</p>
+                            <p class="text-slate-500 text-xs italic">AI će analizirati artikle i potrebne garancije.</p>
+                            @if (session()->has('error'))
+                                <div class="mt-3 p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs rounded-xl font-mono transition-colors">
+                                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> {{ session('error') }}
                                 </div>
-                            </div>
-                            <div x-data="{ analyzing: false, percent: 0 }">
-                                <button @click="if($wire.pdfFile) { analyzing = true; let interval = setInterval(() => { if(percent < 90) percent += Math.random() * 5; }, 400); $wire.processPdf().then(() => { percent = 100; setTimeout(() => { analyzing = false; percent = 0; }, 500); }); }"
-                                    wire:loading.attr="disabled" wire:target="pdfFile, processPdf" @if(!$pdfFile) disabled @endif type="button"
-                                    class="relative overflow-hidden px-8 py-3 bg-indigo-600 text-white font-black uppercase text-[10px] rounded-xl tracking-widest transition-all hover:bg-indigo-700 dark:hover:bg-indigo-500 active:scale-95 shadow-lg shadow-indigo-600/30 dark:shadow-indigo-900/40 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
-                                    <span x-show="!analyzing"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Pokreni Analizu</span>
-                                    <span x-show="analyzing" class="flex items-center gap-2" style="display: none;"><i class="fa-solid fa-circle-notch fa-spin"></i> <span x-text="Math.round(percent) + '%'"></span></span>
-                                    <div x-show="analyzing" class="absolute bottom-0 left-0 h-1 bg-emerald-400 transition-all duration-500" :style="'width: ' + percent + '%'" style="display: none;"></div>
-                                </button>
-                            </div>
-                        </form>
+                            @endif
+                        </div>
 
-                        {{-- 2. BYPASS UPLOAD ZA JSON --}}
-                        <div class="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800 transition-colors">
-                            <p class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-black mb-3">Ili učitajte gotov JSON fajl (Zaobilazi AI)</p>
-                            <form wire:submit.prevent="processJson" class="flex flex-col sm:flex-row items-center gap-4">
+                        <div class="w-full md:w-auto space-y-6">
+                            <form wire:submit.prevent="processPdf" class="flex flex-col sm:flex-row items-center gap-4">
                                 <div class="relative w-full">
-                                    <input type="file" wire:model="jsonFile" accept=".json" 
-                                        class="block w-full text-[10px] text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:bg-emerald-50 dark:file:bg-emerald-500/20 file:text-emerald-600 dark:file:text-emerald-400 hover:file:bg-emerald-100 dark:hover:file:bg-emerald-500/30 transition-all cursor-pointer">
-                                    <div wire:loading wire:target="jsonFile" class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-white dark:bg-slate-900 px-2 py-1 rounded border border-slate-200 dark:border-transparent">
-                                        <i class="fa-solid fa-circle-notch fa-spin text-emerald-500 dark:text-emerald-400 text-xs"></i> 
-                                        <span class="text-[9px] text-emerald-600 dark:text-emerald-300 font-bold uppercase tracking-widest">Spremam...</span>
+                                    <input type="file" wire:model="pdfFile" accept=".pdf" 
+                                        class="block w-full text-[10px] text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:bg-indigo-100 dark:file:bg-indigo-600/20 file:text-indigo-700 dark:file:text-indigo-400 hover:file:bg-indigo-200 dark:hover:file:bg-indigo-600/30 transition-all cursor-pointer">
+                                    <div wire:loading wire:target="pdfFile" class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-white dark:bg-slate-900 px-2 py-1 rounded border border-slate-200 dark:border-transparent">
+                                        <i class="fa-solid fa-circle-notch fa-spin text-indigo-500 dark:text-indigo-400 text-xs"></i>
+                                        <span class="text-[9px] text-indigo-600 dark:text-indigo-300 font-bold uppercase tracking-widest">Spremam...</span>
                                     </div>
                                 </div>
-                                <button wire:loading.attr="disabled" wire:target="jsonFile, processJson" @if(!$jsonFile) disabled @endif type="submit"
-                                    class="relative overflow-hidden px-8 py-3 bg-emerald-500 text-white font-black uppercase text-[10px] rounded-xl tracking-widest transition-all hover:bg-emerald-600 active:scale-95 shadow-lg shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
-                                    <span wire:loading.remove wire:target="processJson"><i class="fa-solid fa-file-code mr-2"></i> Obradi JSON</span>
-                                    <span wire:loading wire:target="processJson"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Obrađujem...</span>
-                                </button>
+                                <div x-data="{ analyzing: false, percent: 0 }">
+                                    <button @click="if($wire.pdfFile) { analyzing = true; let interval = setInterval(() => { if(percent < 90) percent += Math.random() * 5; }, 400); $wire.processPdf().then(() => { percent = 100; setTimeout(() => { analyzing = false; percent = 0; }, 500); }); }"
+                                        wire:loading.attr="disabled" wire:target="pdfFile, processPdf" @if(!$pdfFile) disabled @endif type="button"
+                                        class="relative overflow-hidden px-8 py-3 bg-indigo-600 text-white font-black uppercase text-[10px] rounded-xl tracking-widest transition-all hover:bg-indigo-700 dark:hover:bg-indigo-500 active:scale-95 shadow-lg shadow-indigo-600/30 dark:shadow-indigo-900/40 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+                                        <span x-show="!analyzing"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> Pokreni Analizu</span>
+                                        <span x-show="analyzing" class="flex items-center gap-2" style="display: none;"><i class="fa-solid fa-circle-notch fa-spin"></i> <span x-text="Math.round(percent) + '%'"></span></span>
+                                        <div x-show="analyzing" class="absolute bottom-0 left-0 h-1 bg-emerald-400 transition-all duration-500" :style="'width: ' + percent + '%'" style="display: none;"></div>
+                                    </button>
+                                </div>
                             </form>
+
+                            <div class="pt-5 border-t border-slate-200 dark:border-slate-800 transition-colors">
+                                <p class="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-black mb-3">Ili učitajte gotov JSON fajl (Zaobilazi AI)</p>
+                                <form wire:submit.prevent="processJson" class="flex flex-col sm:flex-row items-center gap-4">
+                                    <div class="relative w-full">
+                                        <input type="file" wire:model="jsonFile" accept=".json" 
+                                            class="block w-full text-[10px] text-slate-500 dark:text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:bg-emerald-50 dark:file:bg-emerald-500/20 file:text-emerald-600 dark:file:text-emerald-400 hover:file:bg-emerald-100 dark:hover:file:bg-emerald-500/30 transition-all cursor-pointer">
+                                        <div wire:loading wire:target="jsonFile" class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-white dark:bg-slate-900 px-2 py-1 rounded border border-slate-200 dark:border-transparent">
+                                            <i class="fa-solid fa-circle-notch fa-spin text-emerald-500 dark:text-emerald-400 text-xs"></i>
+                                            <span class="text-[9px] text-emerald-600 dark:text-emerald-300 font-bold uppercase tracking-widest">Spremam...</span>
+                                        </div>
+                                    </div>
+                                    <button wire:loading.attr="disabled" wire:target="jsonFile, processJson" @if(!$jsonFile) disabled @endif type="submit"
+                                        class="relative overflow-hidden px-8 py-3 bg-emerald-500 text-white font-black uppercase text-[10px] rounded-xl tracking-widest transition-all hover:bg-emerald-600 active:scale-95 shadow-lg shadow-emerald-500/30 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+                                        <span wire:loading.remove wire:target="processJson"><i class="fa-solid fa-file-code mr-2"></i> Obradi JSON</span>
+                                        <span wire:loading wire:target="processJson"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Obrađujem...</span>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
+                    </div>
+
+                    {{-- PRESKOČI DUGME --}}
+                    <div class="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                        <p class="text-[10px] text-slate-400 dark:text-slate-500 font-bold">AI analiza je opcionalna — možete nastaviti bez uploada.</p>
+                        <button wire:click="preskociAi" 
+                            class="flex items-center gap-2 px-6 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-slate-200 dark:border-slate-700">
+                            <i class="fa-solid fa-forward-step"></i> Preskoči i nastavi bez AI
+                        </button>
                     </div>
                 </div>
                 @endif
 
-                @if($parsedData)
+                @if($imaTenderPodatke)
                 <div wire:transition.opacity class="space-y-8 mt-6">
                     {{-- AI SAŽETAK I RIZIK --}}
                     @if(isset($parsedData['ai_uprava']))
@@ -228,7 +251,7 @@
                     </div>
                     @endif
 
-                    {{-- SEKCIJA: ARTIKLI GENERALNO (Vraćeno i Popravljeno) --}}
+                    {{-- SEKCIJA: ARTIKLI GENERALNO --}}
                     @if(isset($parsedData['artikli_generalno']) && !empty($parsedData['artikli_generalno']))
                     <div class="space-y-4 mb-8">
                         <h3 class="text-md font-black uppercase text-slate-800 dark:text-white flex items-center gap-3">
@@ -245,7 +268,7 @@
                     </div>
                     @endif
 
-                    {{-- SEKCIJA: LOTOVI (Sa Paginacijom) --}}
+                    {{-- SEKCIJA: LOTOVI --}}
                     @if(!empty($parsedData['lotovi']) && isset($parsedData['is_lotovi']) && $parsedData['is_lotovi'])
                     <div class="space-y-4">
                         <h3 class="text-md font-black uppercase text-slate-800 dark:text-white flex items-center gap-3">
@@ -271,7 +294,6 @@
 
                                 @if($isAccepted)
                                 <div class="p-5 border-t border-slate-200 dark:border-slate-800/50 bg-slate-50 dark:bg-slate-900/20" wire:transition.slide.down>
-                                    {{-- PAGINACIJA LOGIKA --}}
                                     @php
                                         $perPage = 10;
                                         $currentPage = $lotPages[$index] ?? 1;
@@ -284,12 +306,10 @@
                                     <div class="max-h-[1000px] overflow-y-auto pr-2 space-y-4 custom-scrollbar mb-6">
                                         @foreach($prikaziArtikle as $artInternalIndex => $art)
                                             @php $originalArtIndex = (($currentPage - 1) * $perPage) + $loop->index; @endphp
-                                            {{-- Uključujemo identičan red kao za generalne, samo šaljemo parametre za lot --}}
                                             @include('livewire.user.partials.tender-artikal-row', ['art' => $art, 'index' => $originalArtIndex, 'type' => 'lot', 'parentIndex' => $index])
                                         @endforeach
                                     </div>
 
-                                    {{-- PAGINACIJA NAVIGACIJA --}}
                                     @if($totalPages > 1)
                                     <div class="flex items-center justify-between py-4 border-t border-slate-200 dark:border-slate-800">
                                         <div class="flex gap-2">
@@ -307,7 +327,6 @@
                                     </div>
                                     @endif
 
-                                    {{-- SUMARNI DIO LOTA --}}
                                     @php 
                                         $nab = floatval($nabavne[$index] ?? 0);
                                         $pon = array_sum($lotOfferPrices[$index] ?? []);
@@ -339,11 +358,27 @@
                     {{-- FOOTER AKCIJE --}}
                     <div class="pt-6">
                         @if(empty($wf->erp_document_id))
+                            @if(!empty($parsedData['_preskocen']))
+                                {{-- Preskočen AI: samo potvrda --}}
+                                @if(!in_array($wf->status, ['offer_submitted', 'completed', 'won', 'lost']))
+                                <button wire:click="submitOffer"
+                                    class="w-full py-5 bg-gradient-to-r from-emerald-500 to-teal-500 dark:from-emerald-600 dark:to-teal-600 text-white font-black uppercase text-sm rounded-2xl shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/40 active:scale-[0.99] transition-all flex items-center justify-center gap-3">
+                                    <i class="fa-solid fa-paper-plane text-lg"></i>
+                                    <span wire:loading.remove wire:target="submitOffer">Potvrdi slanje ponude</span>
+                                    <span wire:loading wire:target="submitOffer"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Potvrđujem...</span>
+                                </button>
+                                @else
+                                <div class="w-full py-5 bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl flex items-center justify-center gap-3 text-emerald-600 dark:text-emerald-400 font-black uppercase text-sm">
+                                    <i class="fa-solid fa-circle-check text-lg"></i> Ponuda potvrđena i u procesu
+                                </div>
+                                @endif
+                            @else
                             <div class="flex flex-wrap justify-end gap-4">
                                 <button wire:click="generisiKatalogPdf" wire:loading.attr="disabled" class="px-8 py-4 bg-gradient-to-r from-blue-500 to-indigo-500 dark:from-blue-600 dark:to-indigo-600 text-white font-black uppercase text-xs rounded-2xl shadow-lg hover:active:scale-95 disabled:opacity-50 transition-all flex items-center gap-3"><i class="fa-solid fa-file-pdf text-lg"></i> <span wire:loading.remove wire:target="generisiKatalogPdf">Katalog PDF</span><span wire:loading wire:target="generisiKatalogPdf">Generišem...</span></button>
                                 <button wire:click="spasiUBazu" wire:loading.attr="disabled" class="px-8 py-4 bg-emerald-500 dark:bg-emerald-600 text-white font-black uppercase text-xs rounded-2xl shadow-lg hover:bg-emerald-600 active:scale-95 transition-all flex items-center gap-3"><i class="fa-solid fa-database text-lg"></i> <span wire:loading.remove wire:target="spasiUBazu">Spasi podatke</span><span wire:loading wire:target="spasiUBazu">Spašavam...</span></button>
                                 <button wire:click="posaljiUErp" wire:loading.attr="disabled" class="px-8 py-4 bg-gradient-to-r from-amber-400 to-orange-500 dark:from-amber-500 dark:to-orange-600 text-white font-black uppercase text-xs rounded-2xl shadow-lg hover:active:scale-95 transition-all flex items-center gap-3 group"><i class="fa-solid fa-server text-lg group-hover:animate-pulse"></i> <span wire:loading.remove wire:target="posaljiUErp">ERP Sync</span><span wire:loading wire:target="posaljiUErp">Sinhronizacija...</span></button>
                             </div>
+                            @endif
                         @else
                             <div class="relative overflow-hidden w-full bg-emerald-50 dark:bg-[#061411] border border-emerald-200 dark:border-emerald-500/30 rounded-3xl p-8 text-center transition-colors">
                                 <div class="relative z-10 flex flex-col items-center">
@@ -360,21 +395,23 @@
             </div>
 
             {{-- ZAVRŠNA FAZA: SLANJE --}}
-            @if(in_array($wf->status, ['documentation_uploaded', 'offer_submitted', 'completed']))
+            @if(in_array($wf->status, ['documentation_uploaded', 'offer_submitted', 'completed', 'won', 'lost', 'rejected']))
             <div wire:transition.slide.down class="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 backdrop-blur-sm rounded-3xl p-8 mt-6 relative overflow-hidden shadow-lg dark:shadow-none">
                 <div class="absolute top-0 right-0 p-8 opacity-10 dark:opacity-5 text-emerald-500"><i class="fa-solid fa-paper-plane text-8xl"></i></div>
                 <h3 class="text-lg font-black uppercase text-slate-800 dark:text-white flex items-center gap-4 mb-6 relative z-10">
                     <span class="bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 w-10 h-10 rounded-xl flex items-center justify-center text-sm border border-emerald-200 dark:border-emerald-500/20 shadow-sm">2</span> 
                     Slanje ponude na e-Nabavke
                 </h3>
-                @if(!in_array($wf->status, ['offer_submitted', 'completed']))
-                    @php $sviDokumentiSpremni = $wf->tasks->count() > 0 && $wf->tasks->count() === $wf->tasks->where('status', 'pribavljeno')->count(); @endphp
-                    <button wire:click="submitOffer" class="w-full relative z-10 font-black py-4 rounded-xl transition-all uppercase text-sm flex items-center justify-center gap-3 {{ $sviDokumentiSpremni ? 'bg-emerald-500 dark:bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 border border-slate-300 dark:border-rose-500/30 cursor-not-allowed' }}"><i class="fa-solid {{ $sviDokumentiSpremni ? 'fa-paper-plane' : 'fa-lock' }}"></i> {{ $sviDokumentiSpremni ? 'Potvrdi slanje' : 'Pribavite sve dokumente za otključavanje' }}</button>
+                @if(!in_array($wf->status, ['offer_submitted', 'completed', 'won', 'lost', 'rejected']))
+                <button wire:click="submitOffer" class="w-full relative z-10 font-black py-4 rounded-xl transition-all uppercase text-sm flex items-center justify-center gap-3 bg-emerald-500 dark:bg-emerald-600 text-white">
+                    <i class="fa-solid fa-paper-plane"></i> Potvrdi slanje
+                </button>
                 @else
                 <div class="relative z-10 bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-5 text-[10px] font-black text-emerald-700 dark:text-emerald-500 uppercase tracking-widest flex items-center transition-colors"><i class="fa-solid fa-circle-check text-lg mr-3"></i> Ponuda uspješno zavedena i poslana.</div>
                 @endif
             </div>
             @endif
+
         </div>
     </div>
 </div>

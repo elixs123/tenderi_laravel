@@ -35,6 +35,8 @@
 
     {{-- MAIN CONTENT --}}
     <main class="flex-1 flex flex-col min-w-0">
+
+        {{-- HEADER --}}
         <header class="h-20 flex items-center justify-between px-8 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/50 backdrop-blur-md transition-colors duration-300">
             <div class="flex items-center gap-4">
                 <div class="bg-blue-100 dark:bg-blue-500/10 p-2.5 rounded-xl text-blue-600 dark:text-blue-500">
@@ -45,12 +47,152 @@
                     <p class="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">CPV Upravljanje</p>
                 </div>
             </div>
+
+            <button wire:click="openCpvBrowser" 
+                    class="flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-blue-500/10 border border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500/50 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition">
+                <i class="fa-solid fa-list-ul"></i>
+                Pregled svih CPV kodova
+            </button>
+
             <div class="text-right">
-                <p class="text-base font-mono font-black tracking-widest text-slate-800 dark:text-white" x-data="{ time: '' }" x-init="setInterval(() => time = new Date().toLocaleTimeString('en-GB'), 1000)" x-text="time"></p>
+                <p class="text-base font-mono font-black tracking-widest text-slate-800 dark:text-white" 
+                   x-data="{ time: '' }" 
+                   x-init="setInterval(() => time = new Date().toLocaleTimeString('en-GB'), 1000)" 
+                   x-text="time"></p>
                 <span class="text-[10px] text-emerald-600 dark:text-green-500 font-black uppercase">Sistem Aktivan</span>
             </div>
         </header>
 
+        {{-- MODAL: Pregled svih CPV kodova --}}
+        @if($showCpvBrowser)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" 
+             wire:click.self="closeCpvBrowser">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[85vh] transition-colors duration-300">
+
+                {{-- Modal Header --}}
+                <div class="flex items-center justify-between px-8 py-5 border-b border-slate-200 dark:border-slate-800">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-blue-100 dark:bg-blue-500/10 p-2 rounded-xl text-blue-600 dark:text-blue-500">
+                            <i class="fa-solid fa-list-ul text-lg"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-base font-black uppercase italic text-slate-800 dark:text-white">Svi <span class="text-blue-600 dark:text-blue-500">CPV Kodovi</span></h2>
+                            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{{ $allCpvsTotal }} kodova u sistemu</p>
+                        </div>
+                    </div>
+                    <button wire:click="closeCpvBrowser" 
+                            class="text-slate-400 hover:text-slate-700 dark:hover:text-white transition p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+
+                {{-- Search + Filter --}}
+                <div class="px-8 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center gap-4">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-blue-500"></i>
+                        <input wire:model.live.debounce.300ms="browserSearch" 
+                               type="text" 
+                               placeholder="Pretraži po kodu ili opisu..." 
+                               class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 pl-11 pr-4 text-xs font-bold outline-none focus:border-blue-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 transition">
+                    </div>
+                    <select wire:model.live="browserTypeFilter" 
+                            class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl py-3 px-4 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none focus:border-blue-500 transition">
+                        <option value="all">Svi tipovi</option>
+                        <option value="root">Samo root sektori</option>
+                        <option value="child">Samo podkategorije</option>
+                    </select>
+                </div>
+
+                {{-- Table --}}
+                <div class="flex-1 overflow-y-auto custom-scroll"
+                     x-data="{}"
+                     x-on:scroll="
+                         if ($el.scrollTop + $el.clientHeight >= $el.scrollHeight - 150) {
+                             $wire.loadMoreCpvs()
+                         }
+                     ">
+                    <table class="w-full text-xs">
+                        <thead class="sticky top-0 bg-slate-50 dark:bg-slate-950 z-10">
+                            <tr class="border-b border-slate-200 dark:border-slate-800">
+                                <th class="px-6 py-3 text-left font-black text-[10px] uppercase tracking-widest text-slate-500 w-36">CPV Kod</th>
+                                <th class="px-6 py-3 text-left font-black text-[10px] uppercase tracking-widest text-slate-500">Opis</th>
+                                <th class="px-6 py-3 text-left font-black text-[10px] uppercase tracking-widest text-slate-500 w-28">Tip</th>
+                                <th class="px-6 py-3 text-right font-black text-[10px] uppercase tracking-widest text-slate-500 w-24">Akcija</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/50">
+                            @forelse($allCpvsBrowser as $cpv)
+                                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition group">
+                                    <td class="px-6 py-3">
+                                        <span class="font-mono font-black text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded-lg text-[11px]">{{ $cpv->code }}</span>
+                                    </td>
+                                    <td class="px-6 py-3 text-slate-700 dark:text-slate-300 font-bold uppercase leading-tight">{{ $cpv->description }}</td>
+                                    <td class="px-6 py-3">
+                                        @if(is_null($cpv->root_id))
+                                            <span class="bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-[9px] px-2 py-0.5 rounded-full font-black uppercase">Root sektor</span>
+                                        @else
+                                            <span class="bg-slate-100 dark:bg-slate-800 text-slate-500 text-[9px] px-2 py-0.5 rounded-full font-black uppercase">Podkategorija</span>
+                                        @endif
+                                    </td>
+                                    <td class="px-6 py-3 text-right">
+                                        <button onclick="confirmAssignFromBrowser('{{ $cpv->id }}', '{{ addslashes($cpv->description) }}')"
+                                                class="opacity-0 group-hover:opacity-100 transition text-[10px] font-black text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 bg-blue-50 dark:bg-blue-500/10 hover:bg-blue-100 dark:hover:bg-blue-500/20 px-2 py-1 rounded-lg">
+                                            <i class="fa-solid fa-user-plus mr-1"></i>Dodaj
+                                        </button>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" class="py-16 text-center text-slate-400 dark:text-slate-600 font-black uppercase text-[10px] tracking-widest">
+                                        Nema rezultata za zadanu pretragu
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+
+                    {{-- Infinite scroll indikator --}}
+                    @if($allCpvsBrowser->count() < $allCpvsFiltered)
+                        <div class="py-6 flex justify-center" wire:loading.remove wire:target="loadMoreCpvs">
+                            <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest animate-pulse">
+                                <i class="fa-solid fa-arrow-down mr-2"></i>Skrolaj za više...
+                            </p>
+                        </div>
+                        <div class="py-6 flex justify-center" wire:loading wire:target="loadMoreCpvs">
+                            <p class="text-[10px] text-blue-500 font-black uppercase tracking-widest">
+                                <i class="fa-solid fa-spinner fa-spin mr-2"></i>Učitavam...
+                            </p>
+                        </div>
+                    @else
+                        <div class="py-4 flex justify-center">
+                            <p class="text-[10px] text-slate-300 dark:text-slate-700 font-black uppercase tracking-widest">
+                                <i class="fa-solid fa-check mr-2"></i>Svi kodovi su učitani
+                            </p>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Modal Footer --}}
+                <div class="px-8 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+                        Prikazano: <span class="text-blue-500">{{ $allCpvsBrowser->count() }}</span> 
+                        od <span class="text-blue-500">{{ $allCpvsFiltered }}</span>
+                        @if($browserSearch || $browserTypeFilter !== 'all')
+                            <span class="text-slate-300 dark:text-slate-600">(filtrirano od {{ $allCpvsTotal }} ukupno)</span>
+                        @else
+                            ukupno
+                        @endif
+                    </p>
+                    <p class="text-[10px] text-slate-400 dark:text-slate-600 font-bold uppercase">
+                        <i class="fa-solid fa-circle-info mr-1"></i>Klikni Dodaj na redu za odabir korisnika
+                    </p>
+                </div>
+
+            </div>
+        </div>
+        @endif
+
+        {{-- PAGE CONTENT --}}
         <div class="flex-1 p-8 overflow-y-auto bg-slate-50/50 dark:bg-[#020617] custom-scroll transition-colors duration-300">
             <div class="max-w-7xl mx-auto">
                 @if($activeUser)
@@ -65,13 +207,16 @@
                     </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+
                         {{-- SEARCH & QUICK ASSIGN --}}
                         <div class="bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 space-y-8 min-h-[600px] flex flex-col shadow-sm dark:shadow-none transition-colors duration-300">
                             <div>
                                 <label class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4 block">Pretraga baze</label>
                                 <div class="relative">
                                     <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-blue-500"></i>
-                                    <input wire:model.live.debounce.400ms="cpvSearch" type="text" placeholder="Upiši naziv ili CPV kod..." 
+                                    <input wire:model.live.debounce.400ms="cpvSearch" 
+                                           type="text" 
+                                           placeholder="Upiši naziv ili CPV kod..." 
                                            class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl py-4 pl-12 pr-4 font-bold text-slate-800 dark:text-white outline-none focus:border-blue-500 transition shadow-sm dark:shadow-2xl placeholder-slate-400 dark:placeholder-slate-500">
                                     
                                     @if(count($searchResults) > 0)
@@ -118,14 +263,17 @@
                             
                             <div class="mb-4 relative">
                                 <i class="fa-solid fa-filter absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"></i>
-                                <input wire:model.live.debounce.300ms="localSearch" type="text" placeholder="Filter dodijeljenih..." 
+                                <input wire:model.live.debounce.300ms="localSearch" 
+                                       type="text" 
+                                       placeholder="Filter dodijeljenih..." 
                                        class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl py-3 pl-11 text-xs font-bold outline-none focus:border-blue-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 transition-all">
                             </div>
 
                             <div class="space-y-3 overflow-y-auto custom-scroll flex-1 pr-2">
                                 @forelse($groupedAssigned as $rootId => $codes)
                                     <div class="bg-slate-50 dark:bg-slate-950/30 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden transition-colors">
-                                        <div wire:click="toggleSector('{{ $rootId }}')" class="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                                        <div wire:click="toggleSector('{{ $rootId }}')" 
+                                             class="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition">
                                             <div class="flex items-center gap-3 min-w-0">
                                                 <i class="fa-solid fa-folder text-blue-500"></i>
                                                 <p class="text-[10px] font-black text-slate-800 dark:text-white uppercase truncate">{{ $codes->first()->root_description ?? 'Sektor '.$rootId }}</p>
@@ -144,7 +292,8 @@
                                                             <p class="text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase leading-tight">{{ $cpv->description }}</p>
                                                             <span class="text-[9px] font-mono text-slate-500">{{ $cpv->code }}</span>
                                                         </div>
-                                                        <button wire:click="removeCpv({{ $cpv->id }})" class="text-slate-400 dark:text-slate-600 hover:text-rose-500 p-2 transition">
+                                                        <button wire:click="removeCpv({{ $cpv->id }})" 
+                                                                class="text-slate-400 dark:text-slate-600 hover:text-rose-500 p-2 transition">
                                                             <i class="fa-solid fa-trash-can"></i>
                                                         </button>
                                                     </div>
@@ -159,6 +308,7 @@
                                 @endforelse
                             </div>
                         </div>
+
                     </div>
                 @else
                     <div class="h-[600px] flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 bg-white dark:bg-transparent border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl shadow-sm dark:shadow-none transition-colors duration-300">
@@ -168,10 +318,11 @@
                 @endif
             </div>
         </div>
+
     </main>
 
     <script>
-        // Pametna SweetAlert funkcija koja čita temu iz dokumenta
+        // Dodjela kad je korisnik već odabran u lijevoj koloni
         window.confirmAssign = (id, name) => {
             const isDark = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
 
@@ -183,6 +334,7 @@
                 showDenyButton: true,
                 confirmButtonText: 'Samo ovaj',
                 denyButtonText: 'Cijeli sektor',
+                cancelButtonText: 'Odustani',
                 confirmButtonColor: '#3b82f6',
                 denyButtonColor: '#10b981',
                 background: isDark ? '#0f172a' : '#ffffff',
@@ -197,6 +349,86 @@
                     @this.assignCpv(id, 'all');
                 }
             });
+        }
+
+        // Dodjela iz browser modala — bira se korisnik iz dropdown-a
+        window.confirmAssignFromBrowser = async (cpvId, cpvName) => {
+            const isDark = document.documentElement.classList.contains('dark') || document.body.classList.contains('dark');
+
+            const users = await @this.getUsersForSelect();
+
+            if (!users || users.length === 0) {
+                Swal.fire({
+                    title: 'Nema korisnika',
+                    text: 'Nema dostupnih uposlenika u sistemu.',
+                    icon: 'warning',
+                    background: isDark ? '#0f172a' : '#ffffff',
+                    color: isDark ? '#fff' : '#1e293b',
+                    customClass: { popup: `border ${isDark ? 'border-slate-700' : 'border-slate-200'} rounded-3xl` }
+                });
+                return;
+            }
+
+            const options = users.map(u => 
+                `<option value="${u.id}">${u.first_name} ${u.last_name} — ${u.email}</option>`
+            ).join('');
+
+            const { value: confirmedUserId, isDenied, isDismissed } = await Swal.fire({
+                title: 'Dodjela CPV koda',
+                html: `
+                    <p style="font-size:12px; margin-bottom:12px; color:${isDark ? '#94a3b8' : '#475569'};">
+                        Kod: <b style="color:${isDark ? '#60a5fa' : '#2563eb'}">${cpvName}</b>
+                    </p>
+                    <select id="swal-user-select" style="
+                        width:100%; padding:10px 14px; border-radius:12px;
+                        font-size:12px; font-weight:700;
+                        background:${isDark ? '#0f172a' : '#f8fafc'};
+                        color:${isDark ? '#fff' : '#1e293b'};
+                        border:1px solid ${isDark ? '#334155' : '#e2e8f0'};
+                        outline:none;
+                    ">
+                        <option value="" disabled selected>-- Odaberi uposlenika --</option>
+                        ${options}
+                    </select>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonText: '<i class="fa-solid fa-user-check"></i>&nbsp; Samo ovaj',
+                denyButtonText: '<i class="fa-solid fa-layer-group"></i>&nbsp; Cijeli sektor',
+                cancelButtonText: 'Odustani',
+                confirmButtonColor: '#3b82f6',
+                denyButtonColor: '#10b981',
+                background: isDark ? '#0f172a' : '#ffffff',
+                color: isDark ? '#fff' : '#1e293b',
+                customClass: {
+                    popup: `border ${isDark ? 'border-slate-700' : 'border-slate-200 shadow-xl'} rounded-3xl`
+                },
+                preConfirm: () => {
+                    const val = document.getElementById('swal-user-select').value;
+                    if (!val) {
+                        Swal.showValidationMessage('Molimo odaberi uposlenika!');
+                        return false;
+                    }
+                    return val;
+                },
+                preDeny: () => {
+                    const val = document.getElementById('swal-user-select').value;
+                    if (!val) {
+                        Swal.showValidationMessage('Molimo odaberi uposlenika!');
+                        return false;
+                    }
+                    return val;
+                },
+            });
+
+            if (isDismissed) return;
+
+            const selectedUserId = confirmedUserId;
+            if (!selectedUserId) return;
+
+            const mode = isDenied ? 'all' : 'single';
+            @this.assignCpvToUser(parseInt(cpvId), parseInt(selectedUserId), mode);
         }
 
         window.addEventListener('notify', event => {

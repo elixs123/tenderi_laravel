@@ -2,73 +2,70 @@
 
 namespace App\Livewire\Tenders;
 
-use App\Models\MarketIntelligence;
 use App\Models\User;
-use Livewire\Component;
-use Livewire\WithPagination;
+use App\Services\EjnApiService;
 use Illuminate\Support\Facades\DB;
+use Livewire\Component;
 
 class MarketRadar extends Component
 {
-    use WithPagination;
-
-    public $selectedUser = '';
-    public $filterType = 'all'; // 'all', 'ANNUNCIEMENT', 'CONTRACT', 'AWARD'
-    public $search = '';
+    public string $activeTab    = 'procedures';
+    public string $selectedUser = '';
+    public string $search       = '';
+    public int    $currentPage  = 1;
+    public int    $perPage      = 15;
 
     protected $queryString = [
+        'activeTab'    => ['except' => 'procedures'],
         'selectedUser' => ['except' => ''],
-        'filterType' => ['except' => 'all'],
-        'search' => ['except' => '']
+        'search'       => ['except' => ''],
+        'currentPage'  => ['except' => 1],
     ];
 
-    public function updatingSearch() { $this->resetPage(); }
-    public function updatingSelectedUser() { $this->resetPage(); }
-    public function updatingFilterType() { $this->resetPage(); }
+    public function updatingSearch(): void       { $this->currentPage = 1; }
+    public function updatingSelectedUser(): void { $this->currentPage = 1; }
 
-    public function render()
+    public function setTab(string $tab): void
     {
-        $query = MarketIntelligence::query();
+        $this->activeTab   = $tab;
+        $this->currentPage = 1;
+        $this->search      = '';
+    }
 
-        if ($this->filterType !== 'all') {
-            $query->where('type', $this->filterType);
-        }
+    public function nextPage(): void { $this->currentPage++; }
+    public function prevPage(): void { if ($this->currentPage > 1) $this->currentPage--; }
 
-        if ($this->search) {
-            $query->where(function($q) {
-                $q->where('authority_name', 'ilike', '%' . $this->search . '%')
-                  ->orWhere('title', 'ilike', '%' . $this->search . '%')
-                  ->orWhere('supplier_name', 'ilike', '%' . $this->search . '%')
-                  ->orWhere('cpv_code', 'like', $this->search . '%');
-            });
-        }
+    private function getUserCpvCodes(): array
+    {
+        if (!$this->selectedUser) return [];
 
-        // 3. MASTER LOGIKA: Filter po CPV kodovima referenta
-        if ($this->selectedUser) {
-            $user = User::find($this->selectedUser);
-            
-            if ($user) {
-                $userCpvCodes = DB::table('user_to_category')
-                    ->where('user_id', $this->selectedUser)
-                    ->pluck('category_id');
+        return DB::table('user_to_category')
+            ->join('cpvcodes', 'user_to_category.category_id', '=', 'cpvcodes.id') 
+            ->where('user_to_category.user_id', $this->selectedUser)
+            ->pluck('cpvcodes.code')
+            ->toArray();
+    }
 
-                $query->where(function($q) use ($userCpvCodes) {
-                    $q->where(function($sub) use ($userCpvCodes) {
-                        $sub->whereIn('type', ['CONTRACT', 'AWARD'])
-                            ->where(function($cpvFilter) use ($userCpvCodes) {
-                                foreach ($userCpvCodes as $code) {
-                                    $cpvFilter->orWhere('cpv_code', 'like', $code . '%');
-                                }
-                            });
-                    })
-                    ->orWhere('type', 'ANNUNCIEMENT');
-                });
-            }
-        }
+    public function render(EjnApiService $api)
+    {
+        $cpvCodes = $this->getUserCpvCodes();
+        $skip     = ($this->currentPage - 1) * $this->perPage;
+
+        $items = match($this->activeTab) {
+            'procedures' => $api->getProcedures($cpvCodes, $this->search, $this->perPage, $skip),
+            'awards'     => $api->getAwards($cpvCodes, $this->search, $this->perPage, $skip),
+            'planned'    => $api->getPlannedProcurements($cpvCodes, $this->search, $this->perPage, $skip),
+            'pi'         => $api->getPiNotices($cpvCodes, $this->search, $this->perPage, $skip),
+            'notices'    => $api->getAwardNotices($cpvCodes, $this->search, $this->perPage, $skip),
+            default      => [],
+        };
 
         return view('livewire.tenders.market-radar', [
-            'results' => $query->orderBy('event_date', 'desc')->paginate(15),
-            'referents' => User::where('role', 'employee')->orderBy('first_name')->get()
+            'items'     => $items,
+            'cpvCodes'  => $cpvCodes,
+            'referents' => User::where('role', 'employee')->orderBy('first_name')->get(),
+            'hasPrev'   => $this->currentPage > 1,
+            'hasNext'   => count($items) >= $this->perPage,
         ])->layout('layouts.default');
     }
 }
