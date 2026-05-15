@@ -4,6 +4,7 @@
             <span class="text-[10px] font-black text-slate-500 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-7 h-7 flex items-center justify-center rounded-lg shadow-sm dark:shadow-inner">{{ (int)$index + 1 }}..</span>
             <span class="leading-tight">{{ $art['opis'] ?? '' }}</span>
         </div>
+        
         <div class="flex items-center gap-4">
             <div class="flex flex-col gap-2 items-center">
                 <div class="bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1.5 rounded-lg border border-indigo-100 dark:border-indigo-500/20 text-center min-w-[90px] w-full transition-colors">

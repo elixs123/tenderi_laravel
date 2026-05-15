@@ -586,13 +586,15 @@ class TenderProgress extends Component
     {
         $allDescriptions = [];
         if (!empty($this->parsedData['artikli_generalno'])) {
-            foreach($this->parsedData['artikli_generalno'] as $art) $allDescriptions[] = $art['opis'];
+            foreach($this->parsedData['artikli_generalno'] as $art) {
+                if (!empty($art['opis'])) $allDescriptions[] = $art['opis'];
+            }
         }
         if (!empty($this->parsedData['lotovi'])) {
             foreach ($this->parsedData['lotovi'] as $lot) {
                 if (isset($lot['artikli']) && is_array($lot['artikli'])) {
                     foreach ($lot['artikli'] as $art) {
-                        $allDescriptions[] = $art['opis']; 
+                        if (!empty($art['opis'])) $allDescriptions[] = $art['opis'];
                     }
                 }
             }
@@ -600,6 +602,31 @@ class TenderProgress extends Component
     
         $allDescriptions = array_values(array_unique($allDescriptions));
 
+        // 1. OBAVEZNO INICIJALIZUJ PRAZAN AI_MATCH NIZ
+        // Ovo rješava problem nestajanja UI bloka kad Python server padne!
+        $inicijalizujPrazno = function(&$art) {
+            if (!isset($art['ai_match'])) {
+                $art['ai_match'] = [
+                    'selected' => null,
+                    'suggestions' => [],
+                    'is_manual' => false,
+                    'is_learned' => false
+                ];
+            }
+        };
+
+        if (!empty($this->parsedData['artikli_generalno'])) {
+            foreach ($this->parsedData['artikli_generalno'] as &$art) $inicijalizujPrazno($art);
+        }
+        if (!empty($this->parsedData['lotovi'])) {
+            foreach ($this->parsedData['lotovi'] as &$lot) {
+                if (isset($lot['artikli']) && is_array($lot['artikli'])) {
+                    foreach ($lot['artikli'] as &$art) $inicijalizujPrazno($art);
+                }
+            }
+        }
+
+        // 2. Probaj dobiti podatke sa Python API-ja
         try {
             $response = Http::withoutVerifying()->timeout(300)->post('http://172.16.199.43:5005/api/test', [
                 'descriptions' => $allDescriptions
@@ -610,7 +637,8 @@ class TenderProgress extends Component
 
                 if (!empty($this->parsedData['artikli_generalno'])) {
                     foreach ($this->parsedData['artikli_generalno'] as $index => &$art) {
-                        $art['ai_match'] = $this->calculateBestMatch($art['opis'], $batchData[$art['opis']] ?? []);
+                        $opis = trim($art['opis']);
+                        $art['ai_match'] = $this->calculateBestMatch($opis, $batchData[$opis] ?? ($batchData[$art['opis']] ?? []));
                     }
                     unset($art); 
                 }
@@ -619,7 +647,8 @@ class TenderProgress extends Component
                     foreach ($this->parsedData['lotovi'] as $lotIndex => &$lot) {
                         if (isset($lot['artikli']) && is_array($lot['artikli'])) {
                             foreach ($lot['artikli'] as $artIndex => &$art) {
-                                $art['ai_match'] = $this->calculateBestMatch($art['opis'], $batchData[$art['opis']] ?? []);
+                                $opis = trim($art['opis']);
+                                $art['ai_match'] = $this->calculateBestMatch($opis, $batchData[$opis] ?? ($batchData[$art['opis']] ?? []));
                             }
                             unset($art); 
                         }
@@ -627,10 +656,11 @@ class TenderProgress extends Component
                     unset($lot);
                 }
             } else {
-               $this->dispatch('notify', ['type' => 'error', 'message' => "Greška pri povezivanju sa AI servisom."]);
+               $this->dispatch('notify', ['type' => 'warning', 'message' => "Python API za sugestije nije dostupan. Prebačeno na ručni unos."]);
             }
         } catch (\Exception $e) {
-            $this->dispatch('notify', ['type' => 'error', 'message' => "Greška: " . $e->getMessage()]);
+            Log::error("Python Match Error: " . $e->getMessage());
+            $this->dispatch('notify', ['type' => 'warning', 'message' => "Mrežna greška: Ne mogu dohvatiti AI sugestije, server (172.16.199.43) nije dostupan."]);
         }
     }
 
