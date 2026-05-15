@@ -486,6 +486,7 @@
             document.getElementById('analysisModal').addEventListener('click', function(e) { if (e.target === this) closeAnalysisModal(); });
             document.getElementById('rejectModal').addEventListener('click', function(e) { if (e.target === this) closeRejectModal(); });
             document.getElementById('acceptTenderModal').addEventListener('click', function(e) { if (e.target === this) { this.classList.add('hidden'); @this.set('acceptingProcedureId', null); } });
+            document.getElementById('procedureDetailModal').addEventListener('click', function(e) { if (e.target === this) { this.classList.add('hidden'); document.getElementById('sidebar').classList.remove('hidden'); @this.closeDetailModal(); } });
         });
 
         // Novi Analysis Modal JS Listener
@@ -579,5 +580,89 @@
 
         window.addEventListener('open-modal', event => { if (event.detail[0] === 'accept-tender-modal' || event.detail === 'accept-tender-modal') { document.getElementById('acceptTenderModal').classList.remove('hidden'); window.initUI(); } });
         window.addEventListener('close-modal', event => { if (event.detail[0] === 'accept-tender-modal' || event.detail === 'accept-tender-modal') { document.getElementById('acceptTenderModal').classList.add('hidden'); } });
+
+        window.addEventListener('hide-sidebar', () => { document.getElementById('sidebar').classList.add('hidden'); });
+        window.addEventListener('show-sidebar', () => { document.getElementById('sidebar').classList.remove('hidden'); });
     </script>
+
+    {{-- PROCEDURE DETAIL MODAL --}}
+    <div id="procedureDetailModal" class="fixed inset-0 z-[300] flex items-center justify-center {{ $viewingProcedure ? '' : 'hidden' }} bg-slate-900/60 dark:bg-black/90 backdrop-blur-md">
+        <div class="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] flex flex-col overflow-hidden border border-slate-200 dark:border-slate-700">
+            @if($viewingProcedure)
+            <div class="flex items-start justify-between p-7 border-b border-slate-100 dark:border-slate-800 shrink-0">
+                <div class="flex-1 pr-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-[10px] font-black uppercase tracking-widest text-blue-500 bg-blue-50 dark:bg-blue-500/10 px-2.5 py-1 rounded-lg">{{ $viewingProcedure->status }}</span>
+                        @if($viewingProcedure->type)
+                            <span class="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">{{ $viewingProcedure->type }}</span>
+                        @endif
+                    </div>
+                    <h2 class="text-slate-900 dark:text-white font-black text-lg leading-snug">{{ $viewingProcedure->name }}</h2>
+                    <p class="text-slate-400 text-xs font-semibold mt-1">{{ $viewingProcedure->number }}</p>
+                </div>
+                <button wire:click="closeDetailModal" onclick="document.getElementById('procedureDetailModal').classList.add('hidden'); document.getElementById('sidebar').classList.remove('hidden')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors shrink-0">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <div class="overflow-y-auto flex-1 p-7 space-y-6">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4">
+                        <div class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Ugovorni organ</div>
+                        <div class="text-sm font-bold text-slate-900 dark:text-white leading-snug">{{ $viewingProcedure->contracting_authority_name ?? '—' }}</div>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4">
+                        <div class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Grad</div>
+                        <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $viewingProcedure->contracting_authority_city_name ?? '—' }}</div>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4">
+                        <div class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Tip ugovora</div>
+                        <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $viewingProcedure->contract_type ?? '—' }}</div>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4">
+                        <div class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Objavljeno</div>
+                        <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $viewingProcedure->announced ? \Carbon\Carbon::parse($viewingProcedure->announced)->format('d.m.Y H:i') : '—' }}</div>
+                    </div>
+                    @if($viewingProcedure->contracting_authority_administrative_unit_name)
+                    <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 col-span-2">
+                        <div class="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Administrativna jedinica</div>
+                        <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $viewingProcedure->contracting_authority_administrative_unit_name }}</div>
+                    </div>
+                    @endif
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    @if($viewingProcedure->has_lots) <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-xl border border-emerald-100 dark:border-emerald-500/20"><i data-lucide="layers" class="w-3 h-3"></i> Ima lotove</span> @endif
+                    @if($viewingProcedure->is_auction_online) <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-xl border border-blue-100 dark:border-blue-500/20"><i data-lucide="monitor" class="w-3 h-3"></i> Online aukcija</span> @endif
+                    @if($viewingProcedure->is_electronic_offer) <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 px-3 py-1.5 rounded-xl border border-purple-100 dark:border-purple-500/20"><i data-lucide="file-text" class="w-3 h-3"></i> E-ponuda</span> @endif
+                    @if($viewingProcedure->has_complaint) <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 px-3 py-1.5 rounded-xl border border-rose-100 dark:border-rose-500/20"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Žalba</span> @endif
+                    @if($viewingProcedure->is_joint_procurement) <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 px-3 py-1.5 rounded-xl border border-amber-100 dark:border-amber-500/20"><i data-lucide="users" class="w-3 h-3"></i> Zajednička nabavka</span> @endif
+                </div>
+                @if($viewingProcedure->lots->isNotEmpty())
+                <div>
+                    <div class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Lotovi ({{ $viewingProcedure->lots->count() }})</div>
+                    <div class="space-y-2">
+                        @foreach($viewingProcedure->lots as $lot)
+                        <div class="flex items-start justify-between bg-slate-50 dark:bg-slate-800 rounded-2xl px-4 py-3 gap-4">
+                            <div class="flex-1">
+                                <div class="text-xs font-black text-slate-900 dark:text-white leading-snug">{{ $lot->name ?: ($lot->short_description ?: 'Lot ' . ($lot->no ?? $loop->iteration)) }}</div>
+                                @if($lot->location) <div class="text-[10px] text-slate-400 mt-0.5">{{ $lot->location }}</div> @endif
+                            </div>
+                            <div class="text-right shrink-0">
+                                <div class="text-sm font-black text-slate-900 dark:text-white font-mono">{{ $lot->estimated_value ? number_format($lot->estimated_value, 2, ',', '.') . ' KM' : '—' }}</div>
+                                <span class="text-[10px] font-bold text-blue-500">{{ $lot->status }}</span>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
+            </div>
+            <div class="flex items-center justify-between p-5 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-slate-50 dark:bg-slate-800/50">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">ID: {{ $viewingProcedure->id }}</span>
+                <button wire:click="closeDetailModal" onclick="document.getElementById('procedureDetailModal').classList.add('hidden'); document.getElementById('sidebar').classList.remove('hidden')" class="px-6 py-2.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-black uppercase tracking-wider rounded-xl hover:opacity-80 transition-opacity">
+                    Zatvori
+                </button>
+            </div>
+            @endif
+        </div>
+    </div>
 </div>

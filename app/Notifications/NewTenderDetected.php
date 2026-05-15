@@ -1,35 +1,30 @@
-<?php 
+<?php
+
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Database\Eloquent\Collection;
 
 class NewTenderDetected extends Notification
 {
     use Queueable;
 
-    public $procedure;
+    public function __construct(public Collection $procedures) {}
 
-    public function __construct($procedure)
-    {
-        $this->procedure = $procedure;
-    }
-
-    public function via($notifiable)
+    public function via($notifiable): array
     {
         return ['mail'];
     }
 
     public function toMail($notifiable)
     {
-        $url = url('/tender-progress/' . $this->procedure->id);
+        $count = $this->procedures->count();
 
         return (new \Illuminate\Notifications\Messages\MailMessage)
-            ->subject('NOVI TENDER JE DETEKTOVAN: JP ELEKTROPRIVREDA BIH D.D. SARAJEVO')
-            ->view('emails.tenders.upravatender', [
-                'procedure' => $this->procedure,
-                'url' => $url
+            ->subject("Novi tenderi ({$count}) — " . now()->format('d.m.Y H:i'))
+            ->view('emails.tenders.novi-tender-sync', [
+                'procedures' => $this->procedures,
             ]);
     }
 }

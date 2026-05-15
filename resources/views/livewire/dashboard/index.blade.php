@@ -416,24 +416,24 @@
              x-transition:leave-end="translate-x-full">
 
             {{-- HEADER --}}
-            <div class="shrink-0 relative bg-slate-900 dark:bg-slate-950 px-8 py-6 border-b border-slate-800">
+            <div class="shrink-0 relative bg-white dark:bg-slate-950 px-8 py-6 border-b border-slate-200 dark:border-slate-800">
                 <div class="flex items-start justify-between gap-4 mb-4">
                     <div class="flex-1 min-w-0">
-                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-1">{{ $mt->procedure->contracting_authority_name ?? '—' }}</p>
-                        <h2 class="text-base font-black text-white leading-snug">{{ str($mt->procedure->name ?? '—')->limit(90) }}</h2>
+                        <p class="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 dark:text-indigo-400 mb-1">{{ $mt->procedure->contracting_authority_name ?? '—' }}</p>
+                        <h2 class="text-base font-black text-slate-900 dark:text-white leading-snug">{{ str($mt->procedure->name ?? '—')->limit(90) }}</h2>
                     </div>
-                    <button x-on:click="open = false; setTimeout(() => $wire.closeModal(), 300)" class="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-rose-500/80 text-white/70 hover:text-white transition-colors text-sm group border border-white/10">
+                    <button x-on:click="open = false; setTimeout(() => $wire.closeModal(), 300)" class="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-white/10 hover:bg-rose-500 text-slate-500 dark:text-white/70 hover:text-white transition-colors text-sm group border border-slate-200 dark:border-white/10">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
-                
+
                 <div class="flex flex-wrap items-center gap-2">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-white/10 text-white/90 border border-white/10 text-[10px] font-black uppercase tracking-widest">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-white/90 border border-slate-200 dark:border-white/10 text-[10px] font-black uppercase tracking-widest">
                         <i class="fa-solid {{ $statusInfo[2] }}"></i> {{ $statusInfo[0] }}
                     </span>
                     @if($mtRizik)
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-white/10 text-white/90 border border-white/10 text-[10px] font-black uppercase tracking-widest">
-                        <i class="fa-solid fa-shield-halved text-amber-400"></i> Rizik: {{ $mtRizik }}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-white/90 border border-slate-200 dark:border-white/10 text-[10px] font-black uppercase tracking-widest">
+                        <i class="fa-solid fa-shield-halved text-amber-500 dark:text-amber-400"></i> Rizik: {{ $mtRizik }}
                     </span>
                     @endif
                 </div>
@@ -537,10 +537,24 @@
                 </div>
                 @endif
 
+                {{-- RAZLOG ODBIJANJA --}}
+                @if($mt->status === 'rejected')
+                <div class="bg-rose-50 dark:bg-rose-900/20 rounded-xl p-5 border border-rose-200 dark:border-rose-500/30">
+                    <h3 class="text-[10px] font-black uppercase tracking-widest text-rose-600 dark:text-rose-400 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-ban"></i> Razlog odbijanja
+                    </h3>
+                    @if($mt->reason)
+                        <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{{ $mt->reason }}</p>
+                    @else
+                        <p class="text-sm text-slate-400 dark:text-slate-500 italic">Razlog nije naveden.</p>
+                    @endif
+                </div>
+                @endif
+
                 {{-- KOMENTAR --}}
                 <div class="bg-white dark:bg-slate-800 rounded-xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
                     <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-pen-to-square text-indigo-500"></i> Dodatna Bilješka
+                        <i class="fa-solid fa-pen-to-square text-indigo-500"></i> Dodatna napomena
                     </h3>
                     <div class="relative">
                         <textarea wire:model="modalComment" rows="3"
@@ -549,7 +563,7 @@
                     </div>
                     <div class="flex justify-end mt-3">
                         <button wire:click="saveModalComment" class="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest px-5 py-2.5 rounded-lg transition-colors shadow-sm flex items-center gap-1.5">
-                            <i class="fa-solid fa-floppy-disk"></i> Spasi bilješku
+                            <i class="fa-solid fa-floppy-disk"></i> Spasi napomenu
                         </button>
                     </div>
                 </div>

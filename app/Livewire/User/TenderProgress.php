@@ -838,25 +838,27 @@ class TenderProgress extends Component
         }
 
         $newMatch = [
-            'acIdent' => $ident, 
-            'acName' => $name, 
-            'percent' => $percent, 
+            'acIdent' => $ident,
+            'acName' => $name,
+            'percent' => 100,
             'anRTPrice' => round(floatval($anRTPrice), 2),
-            'anPrice' => round(floatval($anPrice), 2), // SPAŠAVAMO ANPRICE
+            'anPrice' => round(floatval($anPrice), 2),
             'stock_total' => floatval($stockTotal),
             'stock_details' => $stockDetails
         ];
 
         if ($type === 'general') {
-            $this->parsedData['artikli_generalno'][$index1]['ai_match']['selected'] = $newMatch;
-            $this->parsedData['artikli_generalno'][$index1]['ai_match']['is_manual'] = true;
-            
-            $kolicina = floatval($this->parsedData['artikli_generalno'][$index1]['kolicina'] ?? 0);
-            $this->purchasePrices[$index1] = round(floatval($anPrice) * $kolicina, 2);
-            
+            $this->parsedData['artikli_generalno'][$index2]['ai_match']['selected'] = $newMatch;
+            $this->parsedData['artikli_generalno'][$index2]['ai_match']['is_manual'] = true;
+            $this->parsedData['artikli_generalno'][$index2]['ai_match']['is_learned'] = true;
+
+            $kolicina = floatval($this->parsedData['artikli_generalno'][$index2]['kolicina'] ?? 0);
+            $this->purchasePrices[$index2] = round(floatval($anPrice) * $kolicina, 2);
+
         } else {
             $this->parsedData['lotovi'][$index1]['artikli'][$index2]['ai_match']['selected'] = $newMatch;
             $this->parsedData['lotovi'][$index1]['artikli'][$index2]['ai_match']['is_manual'] = true;
+            $this->parsedData['lotovi'][$index1]['artikli'][$index2]['ai_match']['is_learned'] = true;
             
             $kolicina = floatval($this->parsedData['lotovi'][$index1]['artikli'][$index2]['kolicina'] ?? 0);
             $this->lotPurchasePrices[$index1][$index2] = round(floatval($anPrice) * $kolicina, 2);

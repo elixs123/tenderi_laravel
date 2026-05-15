@@ -32,7 +32,29 @@ class ListTenders extends Component
     public $wonPrice = '';
     public $wonSupplier = '';
 
+    public $viewingProcedure = null;
+
     protected $listeners = ['scroll-top' => 'handleScrollTop'];
+
+    public function mount()
+    {
+        $procedureId = request('otvori');
+        if ($procedureId) {
+            $this->viewProcedure($procedureId);
+        }
+    }
+
+    public function viewProcedure($procedureId)
+    {
+        $this->viewingProcedure = Procedure::with('lots')->find($procedureId);
+        $this->dispatch('hide-sidebar');
+    }
+
+    public function closeDetailModal()
+    {
+        $this->viewingProcedure = null;
+        $this->dispatch('show-sidebar');
+    }
 
     public function handleScrollTop() {
         // Handled via JS listener in Blade

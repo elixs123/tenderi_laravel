@@ -127,6 +127,12 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        'sync' => [
+            'driver' => 'single',
+            'path' => storage_path('logs/sync-' . now()->format('Y-m') . '.log'),
+            'level' => 'info',
+        ],
+
     ],
 
 ];

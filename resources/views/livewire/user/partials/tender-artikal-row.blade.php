@@ -1,19 +1,19 @@
 <div class="bg-white dark:bg-slate-950/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col gap-3 transition-colors">
     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800/50 pb-4 transition-colors">
         <div class="flex-1 flex items-center gap-3 text-[14px] text-slate-800 dark:text-slate-200 font-bold transition-colors">
-            <span class="text-[10px] font-black text-slate-500 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-7 h-7 flex items-center justify-center rounded-lg shadow-sm dark:shadow-inner">{{ $index + 1 }}.</span>
-            <span class="leading-tight">{{ $art['opis'] }}</span>
+            <span class="text-[10px] font-black text-slate-500 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-7 h-7 flex items-center justify-center rounded-lg shadow-sm dark:shadow-inner">{{ (int)$index + 1 }}..</span>
+            <span class="leading-tight">{{ $art['opis'] ?? '' }}</span>
         </div>
         <div class="flex items-center gap-4">
             <div class="flex flex-col gap-2 items-center">
                 <div class="bg-indigo-50 dark:bg-indigo-900/20 px-3 py-1.5 rounded-lg border border-indigo-100 dark:border-indigo-500/20 text-center min-w-[90px] w-full transition-colors">
-                    <span class="text-sm font-mono text-indigo-700 dark:text-indigo-400 font-black">{{ $art['kolicina'] }}</span>
-                    <span class="text-[9px] uppercase font-black text-indigo-500/70 ml-1">{{ $art['jm'] }}</span>
+                    <span class="text-sm font-mono text-indigo-700 dark:text-indigo-400 font-black">{{ $art['kolicina'] ?? ''}}</span>
+                    <span class="text-[9px] uppercase font-black text-indigo-500/70 ml-1">{{ $art['jm'] ?? '' }}</span>
                 </div>
                 @php
                     $match = $art['ai_match']['selected'] ?? null;
                     $stockTotal = floatval($match['stock_total'] ?? 0);
-                    $trazeno = floatval($art['kolicina']);
+                    $trazeno = floatval($art['kolicina'] ?? 0);
                     $stockColor = $stockTotal >= $trazeno ? 'text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10' : 'text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-500/30 hover:bg-rose-50 dark:hover:bg-rose-500/10';
                 @endphp
                 @if($match)
@@ -67,7 +67,6 @@
         </div>
     </div>
 
-    {{-- EDIT / SUGGESTED --}}
     @if(isset($art['ai_match']))
     <div class="{{ $type === 'lot' ? 'ml-10' : '' }}">
         @php
@@ -79,15 +78,15 @@
             $badgeStyle = $pct >= 80 ? 'bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-500 border-emerald-200 dark:border-emerald-500/20' : ($pct >= 50 ? 'bg-amber-100 dark:bg-amber-500/10 text-amber-700 dark:text-amber-500 border-amber-200 dark:border-amber-500/20' : 'bg-rose-100 dark:bg-rose-500/10 text-rose-700 dark:text-rose-500 border-rose-200 dark:border-rose-500/20');
         @endphp
         <div x-data="{ editMode: false, searchQuery: '', isSearching: false, searchResults: [], doSearch() { if(this.searchQuery.length < 3) return; this.isSearching = true; $wire.searchManual(this.searchQuery).then(res => { this.searchResults = res; this.isSearching = false; }); } }">
-            <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/60 p-2.5 rounded-lg border {{ $borderColor }} transition-colors">
+            <div @click="editMode = !editMode" class="flex items-center justify-between bg-slate-50 dark:bg-slate-900/60 p-2.5 rounded-lg border {{ $borderColor }} cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors">
                 <div class="flex items-center gap-3 flex-1 overflow-hidden">
                     <i class="fa-solid fa-link text-slate-400 dark:text-slate-500 text-[10px]"></i>
                     @if($match)
-                        <span class="text-xs font-mono {{ $textColor }} truncate">{{ $match['acName'] }}</span>
+                        <span class="text-xs font-mono {{ $textColor }} truncate"><span class="font-black">{{ $match['acIdent'] }}</span> - {{ $match['acName'] }}</span>
                         <span class="px-2 py-0.5 border rounded text-[9px] font-black tracking-wider {{ $badgeStyle }}">{{ $pct }}% MATCH @if($isManual) <i class="fa-solid fa-user-check"></i> @endif</span>
                     @else <span class="text-xs font-mono text-rose-500/70 italic">Nema mapiranog artikla</span> @endif
                 </div>
-                <button @click="editMode = !editMode" type="button" class="text-[9px] text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white uppercase font-black px-3 py-1 bg-slate-200 dark:bg-slate-800 rounded-md transition-all"><i class="fa-solid fa-pen mr-1"></i> Edit</button>
+                <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 dark:text-slate-500 transition-transform duration-300" :class="{'rotate-180': editMode}"></i>
             </div>
             <div x-show="editMode" x-collapse class="mt-2 bg-white dark:bg-[#020617] border border-indigo-200 dark:border-indigo-500/30 rounded-xl p-3 shadow-xl z-40 relative transition-colors" style="display: none;">
                 <div class="relative mb-3">
@@ -101,7 +100,7 @@
                             @forelse($art['ai_match']['suggestions'] ?? [] as $sug)
                                 @php $sStyle = $sug['percent'] >= 80 ? 'text-emerald-700 dark:text-emerald-500 bg-emerald-100 dark:bg-emerald-500/10' : ($sug['percent'] >= 50 ? 'text-amber-700 dark:text-amber-500 bg-amber-100 dark:bg-amber-500/10' : 'text-rose-700 dark:text-rose-500 bg-rose-100 dark:bg-rose-500/10'); @endphp
                                 <button type="button" wire:click="updateArticleMatch('{{ $type }}', {{ $parentIndex ?? 'null' }}, {{ $index }}, '{{ $sug['acIdent'] }}', '{{ addslashes($sug['acName']) }}', {{ $sug['percent'] }}, '{{ addslashes($art['opis']) }}', {{ floatval($sug['anRTPrice'] ?? 0) }}, {{ floatval($sug['stock_total'] ?? 0) }}, '{{ json_encode($sug['stock_details'] ?? []) }}', {{ floatval($sug['anPrice'] ?? 0) }})" @click="editMode = false" class="w-full text-left p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent flex justify-between items-center transition-all group">
-                                    <span class="text-[11px] text-slate-700 dark:text-slate-300 font-mono transition-colors group-hover:text-black dark:group-hover:text-white">{{ $sug['acName'] }}</span>
+                                    <span class="text-[11px] text-slate-700 dark:text-slate-300 font-mono transition-colors group-hover:text-black dark:group-hover:text-white"><span class="font-bold">{{ $sug['acIdent'] }}</span> - {{ $sug['acName'] }}</span>
                                     <span class="text-[10px] font-black px-2 rounded {{ $sStyle }} transition-colors">{{ $sug['percent'] }}%</span>
                                 </button>
                             @empty <p class="text-[10px] text-slate-500 italic p-2">Nema preporuka.</p> @endforelse
@@ -110,8 +109,10 @@
                     <template x-if="searchQuery.length >= 3">
                         <div>
                             <template x-for="result in searchResults" :key="result.acIdent">
-                                <button type="button" x-on:click="$wire.updateArticleMatch('{{ $type }}', {{ $parentIndex ?? 'null' }}, {{ $index }}, result.acIdent, result.acName, 100, '{{ addslashes($art['opis']) }}', result.anRTPrice || 0, result.stock_total || 0, JSON.stringify(result.stock_details || []), result.anPrice || 0); editMode = false;" class="w-full text-left p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/30 border border-transparent flex justify-between items-center transition-all group">
-                                    <span class="text-[11px] text-slate-700 dark:text-slate-300 font-mono group-hover:text-black dark:group-hover:text-white" x-text="result.acName"></span>
+                                <button type="button" x-on:click="$wire.updateArticleMatch('{{ $type }}', {{ $parentIndex ?? 'null' }}, {{ $index }}, result.acIdent, result.acName, 100, '{{ addslashes($art['opis'] ?? '') }}', result.anRTPrice || 0, result.stock_total || 0, JSON.stringify(result.stock_details || []), result.anPrice || 0); editMode = false;" class="w-full text-left p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/30 border border-transparent flex justify-between items-center transition-all group">
+                                    <span class="text-[11px] text-slate-700 dark:text-slate-300 font-mono group-hover:text-black dark:group-hover:text-white">
+                                        <span class="font-bold" x-text="result.acIdent"></span> - <span x-text="result.acName"></span>
+                                    </span>
                                     <span class="text-[10px] text-indigo-600 dark:text-indigo-400 font-black"><i class="fa-solid fa-plus"></i> Odaberi</span>
                                 </button>
                             </template>

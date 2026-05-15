@@ -42,10 +42,27 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/test', function () {
-    dd(phpinfo());
-    $users = DB::connection('pantheon')->table('the_setitem')->limit(10)->get();
+   $trackedCpvIds = \DB::table('user_to_category')->pluck('category_id')->unique()->all();
 
-    dd($users);
+        $userSettings = \DB::table('users')->where('id', 13)->value('settings');
+        $allRegions = collect(json_decode($userSettings, true)['regions'] ?? [])->filter()->values()->all();
+
+        $query = Procedure::whereIn('cpvcodeid', $trackedCpvIds);
+
+        if (!empty($allRegions)) {
+           
+            $query->whereIn('contracting_authority_city_name', $allRegions);
+        }
+
+        $procedures = $query->with('lots')->get();
+
+        dd($procedures);
+
+        if ($procedures->isEmpty()) {
+            $this->info("📭 Nema novih tendera koji odgovaraju praćenim CPV kodovima i regionima.");
+            return;
+        }
+    dd($procedures);
     // $procedure = Procedure::latest()->first() ?? new Procedure([
     //     'id' => 24, // Ovo nam treba za tvoj URL
     //     'name' => 'NABAVKA MATERIJALA ZA VODOVOD I KANALIZACIJU',
