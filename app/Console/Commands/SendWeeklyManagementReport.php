@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Lot;
+use App\Models\Procedure;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -41,7 +42,7 @@ class SendWeeklyManagementReport extends Command
         $accepted = $workflows->whereIn('status', self::ACCEPTED_STATUSES)->values();
         $rejected = $workflows->whereIn('status', self::REJECTED_STATUSES)->values();
 
-        // Učitaj lotove za sve prihvaćene workflowove koji imaju accepted_lots
+        // Učitaj lotove za prihvaćene workflowove
         $allLotIds = $accepted->flatMap(function ($w) {
             $ids = is_string($w->accepted_lots) ? json_decode($w->accepted_lots, true) : [];
             return is_array($ids) ? $ids : [];
@@ -56,32 +57,48 @@ class SendWeeklyManagementReport extends Command
             $ids  = is_array($ids) ? $ids : [];
             $lots = collect($ids)->map(fn($id) => $lotsById->get($id))->filter();
 
-            $w->lot_names    = $lots->map(fn($l) => $l->name ?: ('LOT ' . $l->no))->join(', ');
-            $w->lot_value    = $lots->sum('estimated_value');
-            $w->has_lots     = $lots->isNotEmpty();
+            $w->lot_names = $lots->map(fn($l) => $l->name ?: ('LOT ' . $l->no))->join(', ');
+            $w->lot_value = $lots->sum('estimated_value');
+            $w->has_lots  = $lots->isNotEmpty();
             return $w;
         });
 
-        $pending = collect(DB::select("
-            SELECT p.id, p.name as procedure_name,
-                   p.contracting_authority_name as contracting_authority,
-                   p.created_at
-            FROM procedures p
-            WHERE p.created_at >= NOW() - INTERVAL '7 days'
-              AND NOT EXISTS (
-                  SELECT 1 FROM tender_workflows tw WHERE tw.procedure_id = p.id
-              )
-              AND p.cpvcodeid IN (
-                  SELECT category_id FROM user_to_category WHERE user_id = 11
-              )
-            ORDER BY p.created_at DESC
-        "));
+        // Settings, CPV kodovi (leaf + root) i regioni od usera 11
+        $user11Settings = DB::table('users')->where('id', 11)->value('settings');
+        $user11Settings = is_string($user11Settings) ? json_decode($user11Settings, true) : [];
+
+        $user11Regions = array_values(array_filter($user11Settings['regions'] ?? []));
+        $user11Types   = array_values(array_filter($user11Settings['types'] ?? []));
+
+        $user11CpvIds = DB::table('user_to_category')
+            ->where('user_id', 11)
+            ->get(['category_id', 'category_root_id'])
+            ->flatMap(fn($r) => array_filter([$r->category_id, $r->category_root_id]))
+            ->unique()
+            ->values()
+            ->all();
+
+        $pendingQuery = Procedure::query()
+            ->where('created_at', '>=', now()->subWeek())
+            ->whereDoesntHave('workflow')
+            ->whereIn('cpvcodeid', $user11CpvIds);
+
+        if (!empty($user11Regions)) {
+            $pendingQuery->whereIn('contracting_authority_city_name', $user11Regions);
+        }
+        if (!empty($user11Types)) {
+            $pendingQuery->whereIn('type', $user11Types);
+        }
+
+        $pending = $pendingQuery
+            ->orderByDesc('created_at')
+            ->get(['id', 'name as procedure_name', 'contracting_authority_name as contracting_authority', 'created_at']);
 
         $this->info("  ✅ Prihvaćeni: {$accepted->count()}");
         $this->info("  ❌ Odbijeni:   {$rejected->count()}");
         $this->info("  ⏳ Na čekanju: {$pending->count()}");
 
-        Notification::route('mail', env('MAIL_TO_UPRAVA')
+        Notification::route('mail', env('MAIL_TO_UPRAVA'))
             ->notify(new WeeklyManagementReport(
                 accepted: $accepted,
                 rejected: $rejected,
@@ -90,6 +107,6 @@ class SendWeeklyManagementReport extends Command
                 weekTo:   $to->format('d.m.Y'),
             ));
 
-        $this->info("📧 Izvještaj poslan na elvissarajcic@gmail.com");
+        $this->info("📧 Izvještaj poslan na " . env('MAIL_TO_UPRAVA'));
     }
 }
