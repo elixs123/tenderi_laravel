@@ -28,10 +28,10 @@ class SyncLots extends Command
         $startedAt   = now();
         $syncedTo    = $startedAt->copy();
 
-        // $syncedFrom = SyncJobLog::lastSyncedTo('lots')
-        //     ?? Carbon::yesterday()->startOfDay();
+        $syncedFrom = SyncJobLog::lastSyncedTo('lots')
+            ?? Carbon::yesterday()->startOfDay();
 
-        $syncedFrom = Carbon::parse('2026-05-15')->startOfDay();
+        // $syncedFrom = Carbon::parse('2026-05-15')->startOfDay();
 
         $logEntry = SyncJobLog::create([
             'job'         => 'lots',

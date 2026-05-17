@@ -24,11 +24,11 @@ class SyncTenders extends Command
         $startedAt   = now();
         $syncedTo    = $startedAt->copy();
 
-        $syncedFrom = Carbon::parse('2026-05-15')->startOfDay();
+        // $syncedFrom = Carbon::parse('2026-05-15')->startOfDay();
 
 
-        // $syncedFrom = SyncJobLog::lastSyncedTo('tenders')
-        //     ?? Carbon::yesterday()->startOfDay();
+        $syncedFrom = SyncJobLog::lastSyncedTo('tenders')
+            ?? Carbon::yesterday()->startOfDay();
 
         $logEntry = SyncJobLog::create([
             'job'         => 'tenders',
