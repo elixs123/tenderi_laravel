@@ -139,7 +139,6 @@
                         </td>
                         <td class="user-name">{{ $w->user_name }}</td>
                         <td class="date">{{ \Carbon\Carbon::parse($w->updated_at)->format('d.m.Y') }}</td>
-                        <td><a href="{{ url('/tenders?otvori=' . $w->procedure_id) }}" class="btn-open">Otvori →</a></td>
                     </tr>
                 @empty
                     <tr class="empty-row"><td colspan="7">Nema prihvaćenih tendera u ovom periodu.</td></tr>
@@ -174,7 +173,6 @@
                         <td class="reason">{{ $w->reason ?: '—' }}</td>
                         <td class="user-name">{{ $w->user_name }}</td>
                         <td class="date">{{ \Carbon\Carbon::parse($w->updated_at)->format('d.m.Y') }}</td>
-                        <td><a href="{{ url('/tenders?otvori=' . $w->procedure_id) }}" class="btn-open">Otvori →</a></td>
                     </tr>
                 @empty
                     <tr class="empty-row"><td colspan="6">Nema odbijenih tendera u ovom periodu.</td></tr>
@@ -207,7 +205,6 @@
                         <td>{{ $w->contracting_authority ?? '—' }}</td>
                         <td class="user-name">{{ $w->user_name ?? '—' }}</td>
                         <td class="date">{{ \Carbon\Carbon::parse($w->created_at)->format('d.m.Y') }}</td>
-                        <!-- <td><a href="{{ url('/tenders?otvori=' . $w->id) }}" class="btn-open">Otvori →</a></td> -->
                     </tr>
                 @empty
                     <tr class="empty-row"><td colspan="5">Nema tendera na čekanju.</td></tr>

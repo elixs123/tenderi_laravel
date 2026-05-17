@@ -267,7 +267,7 @@
             </div>
             @endforeach
 
-            <a href="{{ url('/tenderi') }}" style="display:block;background:#2563eb;color:#ffffff;text-align:center;padding:15px;border-radius:14px;text-decoration:none;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:1.2px;margin-top:8px;">
+            <a href="10.20.10.51:3000/tenderi" style="display:block;background:#2563eb;color:#ffffff;text-align:center;padding:15px;border-radius:14px;text-decoration:none;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:1.2px;margin-top:8px;">
                 Otvori aplikaciju
             </a>
 
