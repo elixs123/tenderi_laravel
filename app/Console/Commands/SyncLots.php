@@ -28,8 +28,10 @@ class SyncLots extends Command
         $startedAt   = now();
         $syncedTo    = $startedAt->copy();
 
-        $syncedFrom = SyncJobLog::lastSyncedTo('lots')
-            ?? Carbon::yesterday()->startOfDay();
+        // $syncedFrom = SyncJobLog::lastSyncedTo('lots')
+        //     ?? Carbon::yesterday()->startOfDay();
+
+        $syncedFrom = Carbon::parse('2026-05-15')->startOfDay();
 
         $logEntry = SyncJobLog::create([
             'job'         => 'lots',
@@ -171,16 +173,37 @@ class SyncLots extends Command
             return;
         }
 
-        $trackedCpvIds = DB::table('user_to_category')->pluck('category_id')->unique()->all();
+        // Leaf CPV IDs + Root CPV IDs — isto kao list-tenders
+        $trackedCpvIds = DB::table('user_to_category')
+            ->selectRaw('category_id, category_root_id')
+            ->get()
+            ->flatMap(fn($r) => array_filter([$r->category_id, $r->category_root_id]))
+            ->unique()
+            ->values()
+            ->all();
 
-        $userSettings = DB::table('users')->where('id', 11)->value('settings');
-        $allRegions = collect(json_decode($userSettings, true)['regions'] ?? [])->filter()->values()->all();
+        // Regioni i tipovi sa svih korisnika (ne samo user 11)
+        $users = DB::table('users')->whereNotNull('settings')->pluck('settings');
+
+        $allRegions = $users->flatMap(function ($s) {
+            $decoded = is_string($s) ? json_decode($s, true) : [];
+            return $decoded['regions'] ?? [];
+        })->filter()->unique()->values()->all();
+
+        $allTypes = $users->flatMap(function ($s) {
+            $decoded = is_string($s) ? json_decode($s, true) : [];
+            return $decoded['types'] ?? [];
+        })->filter()->unique()->values()->all();
 
         $query = Procedure::whereIn('id', $insertedIds)
             ->whereIn('cpvcodeid', $trackedCpvIds);
 
         if (!empty($allRegions)) {
             $query->whereIn('contracting_authority_city_name', $allRegions);
+        }
+
+        if (!empty($allTypes)) {
+            $query->whereIn('type', $allTypes);
         }
 
         $procedures = $query->with('lots')->get();
@@ -190,7 +213,7 @@ class SyncLots extends Command
             return;
         }
 
-        Notification::route('mail', 'elvissarajcic@gmail.com')
+        Notification::route('mail', env('MAIL_TO_PRODAJA'))
             ->notify(new NewTenderDetected($procedures));
 
         $this->info("📧 Mail poslan — {$procedures->count()} tendera odgovara praćenim CPV kodovima i regionima.");

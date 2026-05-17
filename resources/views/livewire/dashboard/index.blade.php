@@ -131,6 +131,14 @@
                         @forelse($recentTenders as $tender)
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
                             <td class="px-6 py-5 max-w-md">
+                                @php
+                                    $acceptedLotIds     = is_array($tender->accepted_lots) ? $tender->accepted_lots : [];
+                                    $prihvaceniLotovi   = !empty($acceptedLotIds) ? $tender->lots->whereIn('id', $acceptedLotIds) : collect();
+                                    $ukupnaTenderVrijednost = floatval($tender->ukupna_vrijednost ?? 0);
+                                    $vrijednostPrihvacenih  = floatval($tender->vrijednost_prihvacenih_lotova ?? 0);
+                                    $prikazujeLot  = $prihvaceniLotovi->isNotEmpty();
+                                    $prikazVrijednost = ($prikazujeLot && $vrijednostPrihvacenih > 0) ? $vrijednostPrihvacenih : $ukupnaTenderVrijednost;
+                                @endphp
                                 <div class="mb-2">
                                     <p class="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-1 leading-none">
                                         {{ $tender->procedure->contracting_authority_name ?? 'Nepoznat Ugovorni Organ' }}
@@ -139,12 +147,28 @@
                                         {{ str($tender->procedure->name ?? 'Nepoznat predmet nabavke')->limit(75) }}
                                     </p>
                                 </div>
-                                <div class="flex items-center gap-2 mt-2">
+
+                                @if($prikazujeLot)
+                                <div class="flex flex-wrap gap-1 mb-2">
+                                    @foreach($prihvaceniLotovi as $lot)
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30">
+                                        <i class="fa-solid fa-layer-group text-[9px]"></i>
+                                        {{ str($lot->name ?? ('LOT ' . $lot->no))->limit(40) }}
+                                    </span>
+                                    @endforeach
+                                </div>
+                                @endif
+
+                                <div class="flex items-center gap-2">
                                     <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
                                         ID: {{ $tender->procedure_id }}
                                     </span>
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
-                                        <i class="fa-solid fa-coins mr-1.5 opacity-70"></i> {{ number_format($tender->ukupna_vrijednost ?? 0, 2, ',', '.') }} KM
+                                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+                                        <i class="fa-solid fa-coins opacity-70"></i>
+                                        {{ number_format($prikazVrijednost, 2, ',', '.') }} KM
+                                        @if($prikazujeLot && $ukupnaTenderVrijednost > 0 && abs($prikazVrijednost - $ukupnaTenderVrijednost) > 0.01)
+                                            <span class="opacity-60 normal-case font-bold">(ukupno: {{ number_format($ukupnaTenderVrijednost, 2, ',', '.') }} KM)</span>
+                                        @endif
                                     </span>
                                 </div>
                             </td>
@@ -259,13 +283,39 @@
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     
                                     {{-- Info Kartica --}}
+                                    @php
+                                        $expandAcceptedIds      = is_array($tender->accepted_lots) ? $tender->accepted_lots : [];
+                                        $expandPrihvaceniLotovi = !empty($expandAcceptedIds) ? $tender->lots->whereIn('id', $expandAcceptedIds) : collect();
+                                        $expandUkupno           = floatval($tender->ukupna_vrijednost ?? 0);
+                                        $expandLotVrijednost    = floatval($tender->vrijednost_prihvacenih_lotova ?? 0);
+                                    @endphp
                                     <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-5 shadow-sm">
                                         <p class="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-4 flex items-center gap-2"><i class="fa-solid fa-circle-info text-indigo-500"></i> Informacije</p>
                                         <div class="space-y-3 text-sm">
                                             <div class="flex justify-between items-center pb-2 border-b border-slate-100 dark:border-slate-700">
-                                                <span class="text-slate-600 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider">Vrijednost</span>
-                                                <span class="font-mono font-black text-slate-800 dark:text-slate-200">{{ number_format($tender->ukupna_vrijednost ?? 0, 2, ',', '.') }} KM</span>
+                                                <span class="text-slate-600 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider">Ukupna vrijednost tendera</span>
+                                                <span class="font-mono font-black text-slate-800 dark:text-slate-200">{{ number_format($expandUkupno, 2, ',', '.') }} KM</span>
                                             </div>
+
+                                            @if($expandPrihvaceniLotovi->isNotEmpty())
+                                            <div class="pb-2 border-b border-slate-100 dark:border-slate-700">
+                                                <span class="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider block mb-2">Izabrani lotovi</span>
+                                                @foreach($expandPrihvaceniLotovi as $lot)
+                                                <div class="flex justify-between items-center text-[10px] mb-1">
+                                                    <span class="text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1">
+                                                        <i class="fa-solid fa-layer-group text-[9px]"></i>
+                                                        {{ str($lot->name ?: ('LOT ' . $lot->no))->limit(32) }}
+                                                    </span>
+                                                    <span class="font-mono font-bold text-slate-700 dark:text-slate-300">{{ number_format($lot->estimated_value, 2, ',', '.') }} KM</span>
+                                                </div>
+                                                @endforeach
+                                                <div class="flex justify-between items-center mt-2 pt-1.5 border-t border-slate-100 dark:border-slate-700">
+                                                    <span class="text-slate-600 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider">Ukupno lotovi</span>
+                                                    <span class="font-mono font-black text-emerald-600 dark:text-emerald-400">{{ number_format($expandLotVrijednost, 2, ',', '.') }} KM</span>
+                                                </div>
+                                            </div>
+                                            @endif
+
                                             <div class="flex justify-between items-center pt-1">
                                                 <span class="text-slate-600 dark:text-slate-400 font-bold uppercase text-[10px] tracking-wider">Nivo rizika</span>
                                                 <span class="font-black text-[10px] px-2 py-0.5 rounded border {{ $rizikBoja }}">{{ $rizik ?: 'NIJE ANALIZIRANO' }}</span>

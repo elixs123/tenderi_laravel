@@ -391,11 +391,12 @@ class ListTenders extends Component
         $currentUser = auth()->user();
         $isAdmin = $currentUser->role === 'admin';
 
-        // 1. Osnovna pretraga (Naziv, broj, organ)
+        // 1. Osnovna pretraga (Naziv, broj, notice broj, organ)
         if ($this->search) {
             $query->where(function($q) {
                 $q->where('name', 'ilike', '%' . $this->search . '%')
                 ->orWhere('number', 'ilike', '%' . $this->search . '%')
+                ->orWhere('notice_number', 'ilike', '%' . $this->search . '%')
                 ->orWhere('contracting_authority_name', 'ilike', '%' . $this->search . '%');
             });
         }
@@ -417,8 +418,13 @@ class ListTenders extends Component
             if ($this->selectedUser) {
                 $selectedEmployee = \App\Models\User::find($this->selectedUser);
                 if ($selectedEmployee) {
-                    $userCpvIds = $selectedEmployee->assignedCpvs()->pluck('category_id'); 
-                    $query->whereIn('cpvcodeid', $userCpvIds);
+                    $userCpvIds = $selectedEmployee->assignedCpvs()->pluck('category_id');
+                    $userRootIds = \DB::table('user_to_category')
+                        ->where('user_id', $selectedEmployee->id)
+                        ->whereNotNull('category_root_id')
+                        ->distinct()
+                        ->pluck('category_root_id');
+                    $query->whereIn('cpvcodeid', $userCpvIds->merge($userRootIds)->unique());
                 }
             }
         } else {
@@ -439,8 +445,14 @@ class ListTenders extends Component
                 })
                 ->orWhere(function($sq) use ($currentUser) {
                     $userCpvIds = $currentUser->assignedCpvs()->pluck('category_id');
-                    $sq->whereIn('cpvcodeid', $userCpvIds)
-                    ->whereDoesntHave('workflow'); 
+                    $userRootIds = \DB::table('user_to_category')
+                        ->where('user_id', $currentUser->id)
+                        ->whereNotNull('category_root_id')
+                        ->distinct()
+                        ->pluck('category_root_id');
+                    $allCpvIds = $userCpvIds->merge($userRootIds)->unique();
+                    $sq->whereIn('cpvcodeid', $allCpvIds)
+                    ->whereDoesntHave('workflow', fn($wq) => $wq->whereNotIn('status', ['rejected', 'lost']));
                 });
             });
         }

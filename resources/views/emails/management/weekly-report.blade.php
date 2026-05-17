@@ -110,6 +110,7 @@
                     <tr>
                         <th>Tender</th>
                         <th>Ugovorni organ</th>
+                        <th>Lotovi / Vrijednost</th>
                         <th>Status</th>
                         <th>Korisnik</th>
                         <th>Datum</th>
@@ -122,6 +123,14 @@
                         <td class="tender-name">{{ $w->procedure_name }}</td>
                         <td>{{ $w->contracting_authority ?? '—' }}</td>
                         <td>
+                            @if(!empty($w->has_lots) && $w->has_lots)
+                                <span style="font-size:11px;color:#334155;">{{ $w->lot_names }}</span><br>
+                                <span style="font-size:12px;font-weight:800;color:#059669;font-family:monospace;">{{ number_format($w->lot_value, 2, ',', '.') }} KM</span>
+                            @else
+                                <span style="color:#94a3b8;font-size:11px;font-style:italic;">Cijeli tender</span>
+                            @endif
+                        </td>
+                        <td>
                             @php
                                 $pillMap = ['accepted'=>'pill-green','offer_submitted'=>'pill-blue','documentation_uploaded'=>'pill-blue','won'=>'pill-green','completed'=>'pill-green'];
                                 $labelMap = ['accepted'=>'Prihvaćen','offer_submitted'=>'Ponuda','documentation_uploaded'=>'Dok. učitana','won'=>'Dobijen','completed'=>'Završen'];
@@ -133,7 +142,7 @@
                         <td><a href="{{ url('/tenders?otvori=' . $w->procedure_id) }}" class="btn-open">Otvori →</a></td>
                     </tr>
                 @empty
-                    <tr class="empty-row"><td colspan="6">Nema prihvaćenih tendera u ovom periodu.</td></tr>
+                    <tr class="empty-row"><td colspan="7">Nema prihvaćenih tendera u ovom periodu.</td></tr>
                 @endforelse
                 </tbody>
             </table>

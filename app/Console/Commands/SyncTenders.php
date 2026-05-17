@@ -18,14 +18,17 @@ class SyncTenders extends Command
     public function handle()
     {
         $pageSize  = 100;
-        $skip      = 0;
+        $lastId    = 0;
         $insertedIds = [];
         $updatedIds  = [];
         $startedAt   = now();
         $syncedTo    = $startedAt->copy();
 
-        $syncedFrom = SyncJobLog::lastSyncedTo('tenders')
-            ?? Carbon::yesterday()->startOfDay();
+        $syncedFrom = Carbon::parse('2026-05-15')->startOfDay();
+
+
+        // $syncedFrom = SyncJobLog::lastSyncedTo('tenders')
+        //     ?? Carbon::yesterday()->startOfDay();
 
         $logEntry = SyncJobLog::create([
             'job'         => 'tenders',
@@ -42,13 +45,14 @@ class SyncTenders extends Command
 
         try {
             while (true) {
-                $this->info("📡 Request na Skip: {$skip}...");
+                $this->info("📡 Request, lastId: {$lastId}...");
+
+                $filter = "Announced ge {$fromDate} and Id gt {$lastId}";
 
                 $response = Http::withoutVerifying()->timeout(60)->get("https://open.ejn.gov.ba/Procedures", [
                     '$top'     => $pageSize,
-                    '$skip'    => $skip,
-                    '$orderby' => 'Announced desc',
-                    '$filter'  => "Announced ge {$fromDate}",
+                    '$orderby' => 'Id asc',
+                    '$filter'  => $filter,
                 ]);
 
                 $this->info("request" . $response->effectiveUri() . " | Status: " . $response->status());
@@ -65,11 +69,18 @@ class SyncTenders extends Command
                     break;
                 }
 
+                $lastId = end($items)['Id'];
+
                 $firstDate = Carbon::parse($items[0]['Announced'])->format('d.m. H:i');
                 $lastDate  = Carbon::parse(end($items)['Announced'])->format('d.m. H:i');
-                $this->line("📦 Paket: " . count($items) . " zapisa ($firstDate - $lastDate)");
+                $this->line("📦 Paket: " . count($items) . " zapisa ($firstDate - $lastDate) | lastId: {$lastId}");
+
+                $procedureIds = array_column($items, 'Id');
+                $noticesMap   = $this->fetchNotices($procedureIds);
 
                 foreach ($items as $item) {
+                    $notice = $noticesMap[$item['Id']] ?? [];
+
                     $procedure = Procedure::updateOrCreate(
                         ['id' => $item['Id']],
                         [
@@ -140,6 +151,18 @@ class SyncTenders extends Command
 
                             'cpvcodeid'    => $item['CpvCodeId'] ?? 0,
                             'last_updated' => $item['LastUpdated'] ? Carbon::parse($item['LastUpdated']) : now(),
+
+                            // Podaci iz ProcurementNotices
+                            'notice_number'                  => $notice['Number'] ?? null,
+                            'application_deadline_date_time' => isset($notice['ApplicationDeadlineDateTime'])
+                                ? Carbon::parse($notice['ApplicationDeadlineDateTime'])
+                                : null,
+                            'bid_opening_date_time'          => isset($notice['BidOpeningDateTime'])
+                                ? Carbon::parse($notice['BidOpeningDateTime'])
+                                : null,
+                            'contact_email'   => $notice['AdditionalInformationEmailAddress'] ?? null,
+                            'contact_phone'   => $notice['AdditionalInformationPhoneNumber'] ?? null,
+                            'contact_website' => $notice['AdditionalInformationWebSite'] ?? null,
                         ]
                     );
 
@@ -150,7 +173,6 @@ class SyncTenders extends Command
                     }
                 }
 
-                $skip += $pageSize;
 
                 $this->comment("⏳ Pauza 1s...");
                 sleep(1);
@@ -179,5 +201,32 @@ class SyncTenders extends Command
             'updated'     => $updatedIds,
             'total'       => count($insertedIds) + count($updatedIds),
         ]);
+    }
+
+    // Dohvata ProcurementNotices za batch ID-ova i vraća mapu [ProcedureId => notice]
+    private function fetchNotices(array $procedureIds): array
+    {
+        if (empty($procedureIds)) {
+            return [];
+        }
+
+        $idList = implode(',', $procedureIds);
+
+        $response = Http::withoutVerifying()->timeout(60)->get('https://open.ejn.gov.ba/ProcurementNotices', [
+            '$filter' => "ProcedureId in ({$idList})",
+            '$top'    => count($procedureIds),
+        ]);
+
+        if ($response->failed()) {
+            $this->warn("⚠️  ProcurementNotices fetch nije uspio za batch: {$idList}");
+            return [];
+        }
+
+        $map = [];
+        foreach ($response->json('value') ?? [] as $notice) {
+            $map[$notice['ProcedureId']] = $notice;
+        }
+
+        return $map;
     }
 }

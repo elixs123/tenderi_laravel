@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Lot;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -26,6 +27,7 @@ class SendWeeklyManagementReport extends Command
 
         $workflows = collect(DB::select("
             SELECT tw.id, tw.procedure_id, tw.status, tw.reason, tw.created_at, tw.updated_at,
+                   tw.accepted_lots,
                    p.name as procedure_name,
                    p.contracting_authority_name as contracting_authority,
                    CONCAT(u.first_name, ' ', u.last_name) as user_name
@@ -39,6 +41,27 @@ class SendWeeklyManagementReport extends Command
         $accepted = $workflows->whereIn('status', self::ACCEPTED_STATUSES)->values();
         $rejected = $workflows->whereIn('status', self::REJECTED_STATUSES)->values();
 
+        // Učitaj lotove za sve prihvaćene workflowove koji imaju accepted_lots
+        $allLotIds = $accepted->flatMap(function ($w) {
+            $ids = is_string($w->accepted_lots) ? json_decode($w->accepted_lots, true) : [];
+            return is_array($ids) ? $ids : [];
+        })->filter()->unique()->values();
+
+        $lotsById = $allLotIds->isNotEmpty()
+            ? Lot::whereIn('id', $allLotIds)->get()->keyBy('id')
+            : collect();
+
+        $accepted = $accepted->map(function ($w) use ($lotsById) {
+            $ids  = is_string($w->accepted_lots) ? json_decode($w->accepted_lots, true) : [];
+            $ids  = is_array($ids) ? $ids : [];
+            $lots = collect($ids)->map(fn($id) => $lotsById->get($id))->filter();
+
+            $w->lot_names    = $lots->map(fn($l) => $l->name ?: ('LOT ' . $l->no))->join(', ');
+            $w->lot_value    = $lots->sum('estimated_value');
+            $w->has_lots     = $lots->isNotEmpty();
+            return $w;
+        });
+
         $pending = collect(DB::select("
             SELECT p.id, p.name as procedure_name,
                    p.contracting_authority_name as contracting_authority,
@@ -48,6 +71,9 @@ class SendWeeklyManagementReport extends Command
               AND NOT EXISTS (
                   SELECT 1 FROM tender_workflows tw WHERE tw.procedure_id = p.id
               )
+              AND p.cpvcodeid IN (
+                  SELECT category_id FROM user_to_category WHERE user_id = 11
+              )
             ORDER BY p.created_at DESC
         "));
 
@@ -55,7 +81,7 @@ class SendWeeklyManagementReport extends Command
         $this->info("  ❌ Odbijeni:   {$rejected->count()}");
         $this->info("  ⏳ Na čekanju: {$pending->count()}");
 
-        Notification::route('mail', 'elvissarajcic@gmail.com')
+        Notification::route('mail', env('MAIL_TO_UPRAVA')
             ->notify(new WeeklyManagementReport(
                 accepted: $accepted,
                 rejected: $rejected,

@@ -324,7 +324,7 @@ class Index extends Component
     public function render()
     {
         $query = TenderWorkflow::query()
-            ->with(['user', 'procedure'])
+            ->with(['user', 'procedure', 'lots'])
             ->withSum('lots as ukupna_vrijednost', 'estimated_value');
 
         if ($this->selectedUser !== '') {
@@ -339,8 +339,18 @@ class Index extends Component
             $query->whereIn('status', ['accepted', 'documentation_uploaded', 'offer_submitted']);
         }
 
+        $recentTenders = $query->latest('updated_at')->paginate(10);
+
+        foreach ($recentTenders as $tender) {
+            $acceptedLotIds = is_array($tender->accepted_lots) ? $tender->accepted_lots : [];
+
+            $tender->vrijednost_prihvacenih_lotova = !empty($acceptedLotIds)
+                ? $tender->lots->whereIn('id', $acceptedLotIds)->sum('estimated_value')
+                : 0;
+        }
+
         return view('livewire.dashboard.index', [
-            'recentTenders' => $query->latest('updated_at')->paginate(10),
+            'recentTenders' => $recentTenders,
         ])->layout('layouts.default');
     }
 }

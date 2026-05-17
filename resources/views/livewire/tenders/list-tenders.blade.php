@@ -66,7 +66,7 @@
         <div class="flex flex-col lg:flex-row gap-4">
             {{-- Search Input --}}
             <div class="relative flex-1 group">
-                <input wire:model.live.debounce.300ms="search" type="text" placeholder="Traži po nazivu, organu ili broju postupka..." 
+                <input wire:model.live.debounce.300ms="search" type="text" placeholder="Traži po nazivu, organu, broju postupka ili broju objave..."
                     class="w-full bg-white dark:bg-[#1e293b]/60 border border-slate-200 dark:border-slate-800 rounded-2xl py-4 pl-12 pr-4 text-sm text-slate-900 dark:text-white focus:border-blue-600 outline-none transition-all shadow-sm">
                 <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500"></i>
             </div>
@@ -155,6 +155,9 @@
                         <div class="flex flex-wrap items-center gap-2 mb-4">
                             <span class="bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[8px] font-black px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700 uppercase">{{ $tender->type }}</span>
                             <span class="text-slate-400 dark:text-slate-600 text-[10px] font-bold data-mono">#{{ $tender->number }}</span>
+                            @if($tender->notice_number)
+                                <span class="text-blue-500 dark:text-blue-400 text-[10px] font-bold data-mono bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/30" title="Broj objave">{{ $tender->notice_number }}</span>
+                            @endif
                             <span class="text-[9px] font-bold text-slate-400 dark:text-slate-600 ml-auto flex items-center gap-1">
                                 <i data-lucide="clock" class="w-3 h-3"></i> SISTEM: {{ $tender->created_at->format('d.m.Y H:i') }}
                             </span>
@@ -356,11 +359,11 @@
                                 }
                             @endphp
                             <tr class="{{ $isFaded ? 'opacity-40 grayscale bg-slate-50/50 dark:bg-transparent' : 'hover:bg-white dark:hover:bg-slate-800/20' }} transition-all duration-300">
-                                <td class="px-6 py-3 text-[10px] font-black {{ $isFaded ? 'text-slate-400' : 'text-rose-500' }} data-mono align-top pt-4">0{{ $lot->no ?: '1' }}
+                                <td class="px-6 py-3 text-[10px] font-black {{ $isFaded ? 'text-slate-400' : 'text-rose-500' }} data-mono align-top pt-4">{{ str_pad($lot->no ?: $loop->iteration, 2, '0', STR_PAD_LEFT) }}
                                     @if($isThisLotAccepted)<span class="block mt-2 text-[8px] bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 px-1 py-1 rounded border border-emerald-200 dark:border-emerald-500/20 text-center uppercase tracking-widest shadow-sm">Prihvaćen</span>
                                     @elseif($isAccepted && !$isThisLotAccepted)<span class="block mt-2 text-[8px] bg-slate-100 text-slate-400 dark:bg-slate-800/50 dark:text-slate-500 px-1 py-1 rounded text-center uppercase tracking-widest">Odbačen</span>@endif
                                 </td>
-                                <td class="px-4 py-3 text-[10px] font-bold {{ $isFaded ? 'text-slate-400 dark:text-slate-600' : 'text-slate-600 dark:text-slate-300' }} uppercase tracking-tight leading-relaxed align-top pt-4">{{ str($lot->short_description ?: ($lot->name ?: $tender->name))->limit(120) }}</td>
+                                <td class="px-4 py-3 text-[10px] font-bold {{ $isFaded ? 'text-slate-400 dark:text-slate-600' : 'text-slate-600 dark:text-slate-300' }} uppercase tracking-tight leading-relaxed align-top pt-4">{{ str($lot->short_description ?: $lot->name)->limit(120) }}</td>
                                 <td class="px-6 py-3 text-[10px] font-black {{ $isFaded ? 'text-slate-400 dark:text-slate-600' : 'text-slate-800 dark:text-slate-200' }} text-right data-mono align-top pt-4">{{ number_format($lot->estimated_value, 2, ',', '.') }} KM</td>
                             </tr>
                             @endforeach
@@ -598,7 +601,12 @@
                         @endif
                     </div>
                     <h2 class="text-slate-900 dark:text-white font-black text-lg leading-snug">{{ $viewingProcedure->name }}</h2>
-                    <p class="text-slate-400 text-xs font-semibold mt-1">{{ $viewingProcedure->number }}</p>
+                    <div class="flex flex-wrap items-center gap-2 mt-1">
+                        <p class="text-slate-400 text-xs font-semibold">{{ $viewingProcedure->number }}</p>
+                        @if($viewingProcedure->notice_number)
+                            <span class="text-blue-500 text-[10px] font-black data-mono bg-blue-50 dark:bg-blue-500/10 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-500/30">{{ $viewingProcedure->notice_number }}</span>
+                        @endif
+                    </div>
                 </div>
                 <button wire:click="closeDetailModal" onclick="document.getElementById('procedureDetailModal').classList.add('hidden'); document.getElementById('sidebar').classList.remove('hidden')" class="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors shrink-0">
                     <i data-lucide="x" class="w-5 h-5"></i>
@@ -628,7 +636,46 @@
                         <div class="text-sm font-bold text-slate-900 dark:text-white">{{ $viewingProcedure->contracting_authority_administrative_unit_name }}</div>
                     </div>
                     @endif
+                    @if($viewingProcedure->application_deadline_date_time)
+                    <div class="bg-rose-50 dark:bg-rose-500/10 rounded-2xl p-4 border border-rose-100 dark:border-rose-500/20">
+                        <div class="text-[9px] font-black uppercase tracking-widest text-rose-400 mb-1.5 flex items-center gap-1"><i data-lucide="calendar-x" class="w-3 h-3"></i> Rok za prijavu</div>
+                        <div class="text-sm font-black text-rose-700 dark:text-rose-300 data-mono">{{ \Carbon\Carbon::parse($viewingProcedure->application_deadline_date_time)->format('d.m.Y \u H:i') }}</div>
+                    </div>
+                    @endif
+                    @if($viewingProcedure->bid_opening_date_time)
+                    <div class="bg-amber-50 dark:bg-amber-500/10 rounded-2xl p-4 border border-amber-100 dark:border-amber-500/20">
+                        <div class="text-[9px] font-black uppercase tracking-widest text-amber-500 mb-1.5 flex items-center gap-1"><i data-lucide="gavel" class="w-3 h-3"></i> Otvaranje ponuda</div>
+                        <div class="text-sm font-black text-amber-700 dark:text-amber-300 data-mono">{{ \Carbon\Carbon::parse($viewingProcedure->bid_opening_date_time)->format('d.m.Y \u H:i') }}</div>
+                    </div>
+                    @endif
                 </div>
+
+                {{-- KONTAKT PODACI --}}
+                @if($viewingProcedure->contact_email || $viewingProcedure->contact_phone || $viewingProcedure->contact_website)
+                <div class="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 space-y-3">
+                    <div class="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1"><i data-lucide="contact" class="w-3 h-3"></i> Kontakt</div>
+                    @if($viewingProcedure->contact_person_name)
+                        <div class="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
+                            <i data-lucide="user" class="w-4 h-4 text-slate-400 shrink-0"></i> {{ $viewingProcedure->contact_person_name }}
+                        </div>
+                    @endif
+                    @if($viewingProcedure->contact_email)
+                        <a href="mailto:{{ $viewingProcedure->contact_email }}" class="flex items-center gap-2 text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                            <i data-lucide="mail" class="w-4 h-4 shrink-0"></i> {{ $viewingProcedure->contact_email }}
+                        </a>
+                    @endif
+                    @if($viewingProcedure->contact_phone)
+                        <div class="flex items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
+                            <i data-lucide="phone" class="w-4 h-4 text-slate-400 shrink-0"></i> {{ $viewingProcedure->contact_phone }}
+                        </div>
+                    @endif
+                    @if($viewingProcedure->contact_website)
+                        <a href="{{ Str::startsWith($viewingProcedure->contact_website, 'http') ? $viewingProcedure->contact_website : 'https://' . $viewingProcedure->contact_website }}" target="_blank" class="flex items-center gap-2 text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline">
+                            <i data-lucide="globe" class="w-4 h-4 shrink-0"></i> {{ $viewingProcedure->contact_website }}
+                        </a>
+                    @endif
+                </div>
+                @endif
                 <div class="flex flex-wrap gap-2">
                     @if($viewingProcedure->has_lots) <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-xl border border-emerald-100 dark:border-emerald-500/20"><i data-lucide="layers" class="w-3 h-3"></i> Ima lotove</span> @endif
                     @if($viewingProcedure->is_auction_online) <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wide bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-xl border border-blue-100 dark:border-blue-500/20"><i data-lucide="monitor" class="w-3 h-3"></i> Online aukcija</span> @endif
