@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class EjnApiService
 {
@@ -18,17 +19,37 @@ class EjnApiService
         $cacheKey = 'ejn_' . md5($endpoint . serialize($params));
 
         return Cache::remember($cacheKey, now()->addMinutes(20), function () use ($endpoint, $params) {
+            $url = $this->baseUrl . $endpoint;
+
+            Log::info('EJN API poziv', ['endpoint' => $endpoint, 'params' => $params]);
+
             try {
                 $response = Http::timeout(15)
+                    ->withoutVerifying()
                     ->withHeaders(['Accept' => 'application/json'])
-                    ->get($this->baseUrl . $endpoint, $params);
+                    ->get($url, $params);
 
                 if ($response->successful()) {
-                    return $response->json()['value'] ?? [];
+                    $data = $response->json()['value'] ?? [];
+                    Log::info('EJN API uspješno', ['endpoint' => $endpoint, 'count' => count($data)]);
+                    return $data;
                 }
+
+                Log::warning('EJN API neuspješan odgovor', [
+                    'endpoint' => $endpoint,
+                    'status'   => $response->status(),
+                    'razlog'   => $response->reason(),
+                    'body'     => $response->body(),
+                ]);
             } catch (\Exception $e) {
-                \Log::error('EJN API error: ' . $e->getMessage());
+                Log::error('EJN API greška', [
+                    'endpoint' => $endpoint,
+                    'poruka'   => $e->getMessage(),
+                    'file'     => $e->getFile(),
+                    'line'     => $e->getLine(),
+                ]);
             }
+
             return [];
         });
     }
