@@ -161,6 +161,132 @@ class EjnApiService
         ]);
     }
 
+    // Godišnji planovi nabavki
+    public function getAnnualNotices(string $search = '', int $top = 15, int $skip = 0): array
+    {
+        $filters = ['IsLatestVersion eq true'];
+
+        if ($search) {
+            $filters[] = $this->buildSearchFilter($search, ['AnnualNoticeName', 'ContractingAuthorityName']);
+        }
+
+        return $this->get('/AnnouncementAnnualNotices', [
+            '$filter'  => implode(' and ', $filters),
+            '$orderby' => 'Announced desc',
+            '$top'     => $top,
+            '$skip'    => $skip,
+        ]);
+    }
+
+    // Odluke o dodjeli ugovora
+    public function getDecisions(string $search = '', int $top = 15, int $skip = 0): array
+    {
+        $filters = [];
+
+        if ($search) {
+            $filters[] = $this->buildSearchFilter($search, ['ContractingAuthorityName']);
+        }
+
+        return $this->get('/AnnouncementDecisions', [
+            '$filter'  => implode(' and ', $filters) ?: null,
+            '$orderby' => 'Announced desc',
+            '$top'     => $top,
+            '$skip'    => $skip,
+        ]);
+    }
+
+    // NPS nabavke (van javnog sektora)
+    public function getNpsProcurements(string $search = '', int $top = 15, int $skip = 0): array
+    {
+        $filters = ['IsLatestVersion eq true'];
+
+        if ($search) {
+            $filters[] = $this->buildSearchFilter($search, ['NpsProcurementName', 'ContractingAuthorityName']);
+        }
+
+        return $this->get('/AnnouncementNpsProcurements', [
+            '$filter'  => implode(' and ', $filters),
+            '$orderby' => 'Announced desc',
+            '$top'     => $top,
+            '$skip'    => $skip,
+        ]);
+    }
+
+    // Dobavljači — pretraga kompanija po imenu/djelatnosti
+    public function getSuppliers(string $search = '', int $top = 15, int $skip = 0): array
+    {
+        $filters = [];
+        if ($search) {
+            $filters[] = $this->buildSearchFilter($search, ['Name', 'ShortDescription']);
+        }
+        return $this->get('/Suppliers', [
+            '$filter'  => implode(' and ', $filters) ?: null,
+            '$orderby' => 'Name asc',
+            '$top'     => $top,
+            '$skip'    => $skip,
+        ]);
+    }
+
+    // E-aukcije
+    public function getAuctions(string $search = '', int $top = 15, int $skip = 0): array
+    {
+        $filters = [];
+        if ($search) {
+            $filters[] = $this->buildSearchFilter($search, ['ProcedureName', 'LotName', 'ContractingAuthorityName']);
+        }
+        return $this->get('/Auctions', [
+            '$filter'  => implode(' and ', $filters) ?: null,
+            '$orderby' => 'ScheduledAt desc',
+            '$top'     => $top,
+            '$skip'    => $skip,
+        ]);
+    }
+
+    // Poništene procedure
+    public function getTerminations(string $search = '', int $top = 15, int $skip = 0): array
+    {
+        $filters = [];
+        if ($search) {
+            $filters[] = $this->buildSearchFilter($search, ['ProcedureName', 'ContractingAuthorityName']);
+        }
+        return $this->get('/Terminations', [
+            '$filter'  => implode(' and ', $filters) ?: null,
+            '$orderby' => 'DecisionDate desc',
+            '$top'     => $top,
+            '$skip'    => $skip,
+        ]);
+    }
+
+    // Izuzeci od primjene zakona
+    public function getExemptions(string $search = '', int $top = 15, int $skip = 0): array
+    {
+        $filters = [];
+        if ($search) {
+            $filters[] = $this->buildSearchFilter($search, ['MainProcurementName', 'ContractingAuthorityName']);
+        }
+        return $this->get('/ExemptionNotices', [
+            '$filter'  => implode(' and ', $filters) ?: null,
+            '$orderby' => 'ContractDate desc',
+            '$top'     => $top,
+            '$skip'    => $skip,
+        ]);
+    }
+
+    // Pozivi za nadmetanje (ograničeni postupak)
+    public function getBiddingInvitations(string $search = '', int $top = 15, int $skip = 0): array
+    {
+        $filters = [];
+        if ($search) {
+            $filters[] = $this->buildSearchFilter($search, ['ProcedureName', 'ContractingAuthorityName']);
+        }
+        return $this->get('/BiddingInvitations', [
+            '$filter'  => implode(' and ', $filters) ?: null,
+            '$orderby' => 'Announced desc',
+            '$top'     => $top,
+            '$skip'    => $skip,
+        ]);
+    }
+
     public function clearCache(): void
     {
         Cache::flush();

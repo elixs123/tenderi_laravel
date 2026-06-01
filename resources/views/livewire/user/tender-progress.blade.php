@@ -6,9 +6,29 @@
         {{-- HEADER --}}
         <header class="mb-12 sm:mb-16 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
             <div class="flex-1 min-w-0">
-                <a href="#" wire:navigate class="inline-flex items-center gap-2 text-slate-500 hover:text-blue-600 dark:hover:text-blue-500 text-[10px] font-black uppercase tracking-widest transition-colors mb-4">
-                    <i class="fa-solid fa-arrow-left"></i> Nazad na listu
-                </a>
+                <div class="flex items-center gap-3 mb-4">
+                    <a href="#" wire:navigate class="inline-flex items-center gap-2 text-slate-500 hover:text-blue-600 dark:hover:text-blue-500 text-[10px] font-black uppercase tracking-widest transition-colors">
+                        <i class="fa-solid fa-arrow-left"></i> Nazad na listu
+                    </a>
+                    <span class="text-slate-300 dark:text-slate-700">|</span>
+                    @php $ejnBroj = $wf->procedure->notice_number ?: ($wf->procedure->number ?? $wf->procedure_id); @endphp
+                    <button
+                        x-data="{ copied: false }"
+                        @click="navigator.clipboard.writeText('{{ addslashes($ejnBroj) }}'); window.open('https://www.ejn.gov.ba/Announcement/Search', '_blank'); copied = true; setTimeout(() => copied = false, 3000)"
+                        class="inline-flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer">
+                        <i class="fa-solid" :class="copied ? 'fa-check text-emerald-500' : 'fa-copy'"></i>
+                        <span x-show="!copied">Kopiraj broj i otvori eJN</span>
+                        <span x-show="copied" class="text-emerald-500">Kopirano — paste u pretragu!</span>
+                        <code class="font-mono text-[9px] bg-blue-100 dark:bg-blue-500/20 px-1 py-0.5 rounded normal-case">{{ $ejnBroj }}</code>
+                    </button>
+                    <span class="text-slate-300 dark:text-slate-700">|</span>
+                    <button
+                        wire:click="$set('showEjnModal', true)"
+                        class="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer">
+                        <i class="fa-solid fa-file-arrow-down"></i>
+                        Preuzmi PDF s eJN
+                    </button>
+                </div>
                 <h1 class="text-3xl sm:text-4xl font-black uppercase tracking-tight text-slate-900 dark:text-white mb-2 truncate transition-colors">
                     Tender <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500 dark:from-blue-400 dark:to-emerald-400">#{{ $wf->procedure_id }}</span>
                 </h1>
@@ -94,7 +114,6 @@
                          Centar za AI Odluke
                     </h3>
 
-                    {{-- FIX: $imaTenderPodatke definisana OVDJE, prije prvog korištenja --}}
                     @php
                         $imaTenderPodatke = !empty($parsedData) && (
                             (isset($parsedData['artikli_generalno']) && !empty($parsedData['artikli_generalno'])) || 
@@ -414,6 +433,94 @@
 
         </div>
     </div>
+
+    {{-- NOVI POTPUNO REDIZAJNIRANI MODAL (BEZ TELEPORTA) --}}
+    <div x-data="{ open: $wire.entangle('showEjnModal') }" 
+         x-show="open" 
+         style="display: none;"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+         
+        <div @click.outside="open = false" class="w-full max-w-md bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden relative">
+            
+            {{-- Header Modala --}}
+            <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                        <i class="fa-solid fa-file-arrow-down"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wide">eJN Prijava</h3>
+                        <p class="text-[10px] text-slate-400 uppercase">ejn.gov.ba</p>
+                    </div>
+                </div>
+                <button @click="open = false" class="text-slate-400 hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="p-6 space-y-5">
+                {{-- Status Alerts --}}
+                @if($ejnStatus)
+                <div class="rounded-xl p-3 text-xs font-bold flex items-center gap-3 
+                    @if($ejnStatus === 'wrong_credentials' || $ejnStatus === 'error') bg-rose-500/10 text-rose-400 border border-rose-500/20 
+                    @elseif($ejnStatus === 'saved' || str_starts_with($ejnStatus, 'success:')) bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 
+                    @else bg-amber-500/10 text-amber-400 border border-amber-500/20 @endif">
+                    
+                    @if($ejnStatus === 'wrong_credentials') <i class="fa-solid fa-circle-exclamation"></i> Pogrešno korisničko ime ili šifra.
+                    @elseif($ejnStatus === 'saved') <i class="fa-solid fa-check"></i> Sačuvano! Klikni 'Preuzmi PDF'.
+                    @elseif($ejnStatus === 'no_credentials') <i class="fa-solid fa-triangle-exclamation"></i> Unesi i sačuvaj kredencijale prvo.
+                    @elseif($ejnStatus === 'no_pdf') <i class="fa-solid fa-folder-open"></i> Nema PDF dokumenata za ovaj tender.
+                    @elseif(str_starts_with($ejnStatus, 'success:')) <i class="fa-solid fa-file-pdf"></i> PDF uspješno preuzet!
+                    @elseif($ejnStatus === 'error') <i class="fa-solid fa-circle-exclamation"></i> Greška pri preuzimanju. Provjeri log.
+                    @endif
+                </div>
+                @endif
+
+                {{-- Form Inputs --}}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Korisničko ime</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                            <input wire:model="ejnUsername" type="text" placeholder="Korisničko ime" class="w-full bg-slate-950 border border-slate-700 text-white text-sm rounded-xl py-3 pl-10 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                        </div>
+                        @error('ejnUsername') <span class="text-xs text-rose-400 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div x-data="{ showPw: false }">
+                        <label class="block text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1.5">Šifra</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                            <input wire:model="ejnPassword" :type="showPw ? 'text' : 'password'" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-700 text-white text-sm rounded-xl py-3 pl-10 pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none">
+                            <button @click="showPw = !showPw" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white">
+                                <i class="fa-solid" :class="showPw ? 'fa-eye-slash' : 'fa-eye'"></i>
+                            </button>
+                        </div>
+                        @error('ejnPassword') <span class="text-xs text-rose-400 mt-1 block">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+            </div>
+
+            {{-- Footer Buttons --}}
+            <div class="p-4 border-t border-slate-800 bg-slate-800/30 flex gap-3">
+                <button wire:click="saveEjnCredentials" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold uppercase py-3 rounded-xl transition-colors flex justify-center items-center gap-2">
+                    <span wire:loading.remove wire:target="saveEjnCredentials"><i class="fa-solid fa-floppy-disk"></i> Sačuvaj</span>
+                    <span wire:loading wire:target="saveEjnCredentials"><i class="fa-solid fa-spinner fa-spin"></i> Čuvam...</span>
+                </button>
+                <button wire:click="downloadEjnPdf" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold uppercase py-3 rounded-xl transition-colors flex justify-center items-center gap-2">
+                    <span wire:loading.remove wire:target="downloadEjnPdf"><i class="fa-solid fa-download"></i> Preuzmi PDF</span>
+                    <span wire:loading wire:target="downloadEjnPdf"><i class="fa-solid fa-spinner fa-spin"></i> Preuzimam...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <style>

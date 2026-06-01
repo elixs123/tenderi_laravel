@@ -19,6 +19,7 @@ class ListTenders extends Component
 
     public $search = '';
     public $filter = 'all';
+    public $statusFilter = 'new';
     public $sort = 'announced';
     public $selectedUser = '';
     public $selectedCity = '';
@@ -245,6 +246,7 @@ class ListTenders extends Component
 
     public function updatedSelectedUser() { $this->resetPage(); }
     public function updatedSelectedCity() { $this->resetPage(); }
+    public function updatedStatusFilter() { $this->resetPage(); }
 
     public function analyzeMarket($authorityId, $tenderId = null)
     {
@@ -456,6 +458,18 @@ class ListTenders extends Component
                 });
             });
         }
+
+        // 3. Filter po statusu workflow-a
+        match($this->statusFilter) {
+            'new'         => $query->whereDoesntHave('workflow'),
+            'accepted'    => $query->whereHas('workflow', fn($q) => $q->where('status', 'accepted')),
+            'in_progress' => $query->whereHas('workflow', fn($q) => $q->where('status', 'documentation_uploaded')),
+            'submitted'   => $query->whereHas('workflow', fn($q) => $q->whereIn('status', ['offer_submitted', 'completed'])),
+            'won'         => $query->whereHas('workflow', fn($q) => $q->where('status', 'won')),
+            'lost'        => $query->whereHas('workflow', fn($q) => $q->where('status', 'lost')),
+            'rejected'    => $query->whereHas('workflow', fn($q) => $q->where('status', 'rejected')),
+            default       => null,
+        };
 
         $statsQuery = clone $query;
         $currentTotalValue = Lot::whereIn('procedure_id', $statsQuery->pluck('id'))->sum('estimated_value');

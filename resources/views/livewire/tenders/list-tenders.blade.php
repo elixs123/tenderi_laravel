@@ -89,6 +89,50 @@
             </div>
         </div>
 
+        {{-- STATUS FILTERI --}}
+        <div class="flex flex-wrap gap-2">
+            <button wire:click="$set('statusFilter', 'new')"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
+                    {{ $statusFilter === 'new' ? 'bg-slate-700 text-white border-slate-700 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-500 hover:text-slate-700 dark:hover:text-white' }}">
+                <span class="w-2 h-2 rounded-full {{ $statusFilter === 'new' ? 'bg-white/60' : 'bg-slate-400' }}"></span> Novi
+            </button>
+            <button wire:click="$set('statusFilter', 'accepted')"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
+                    {{ $statusFilter === 'accepted' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-blue-400 hover:text-blue-500' }}">
+                <span class="w-2 h-2 rounded-full {{ $statusFilter === 'accepted' ? 'bg-white/60' : 'bg-blue-500' }}"></span> Prihvaćeni
+            </button>
+            <button wire:click="$set('statusFilter', 'in_progress')"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
+                    {{ $statusFilter === 'in_progress' ? 'bg-amber-500 text-white border-amber-500 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-amber-400 hover:text-amber-500' }}">
+                <span class="w-2 h-2 rounded-full {{ $statusFilter === 'in_progress' ? 'bg-white/60' : 'bg-amber-500' }}"></span> U procesu
+            </button>
+            <button wire:click="$set('statusFilter', 'submitted')"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
+                    {{ $statusFilter === 'submitted' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-indigo-400 hover:text-indigo-500' }}">
+                <span class="w-2 h-2 rounded-full {{ $statusFilter === 'submitted' ? 'bg-white/60' : 'bg-indigo-400' }}"></span> Predati
+            </button>
+            <button wire:click="$set('statusFilter', 'won')"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
+                    {{ $statusFilter === 'won' ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-emerald-400 hover:text-emerald-500' }}">
+                <span class="w-2 h-2 rounded-full {{ $statusFilter === 'won' ? 'bg-white/60' : 'bg-emerald-500' }}"></span> Dobijeni
+            </button>
+            <button wire:click="$set('statusFilter', 'lost')"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
+                    {{ $statusFilter === 'lost' ? 'bg-rose-600 text-white border-rose-600 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-rose-400 hover:text-rose-500' }}">
+                <span class="w-2 h-2 rounded-full {{ $statusFilter === 'lost' ? 'bg-white/60' : 'bg-rose-500' }}"></span> Izgubljeni
+            </button>
+            <button wire:click="$set('statusFilter', 'rejected')"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
+                    {{ $statusFilter === 'rejected' ? 'bg-slate-600 text-white border-slate-600 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-500 hover:text-slate-600' }}">
+                <span class="w-2 h-2 rounded-full {{ $statusFilter === 'rejected' ? 'bg-white/60' : 'bg-slate-500' }}"></span> Odbijeni
+            </button>
+            <button wire:click="$set('statusFilter', 'all')"
+                class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
+                    {{ $statusFilter === 'all' ? 'bg-slate-700 text-white border-slate-700 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-800 hover:border-slate-500 hover:text-slate-600' }}">
+                Svi statusi
+            </button>
+        </div>
+
         @if(auth()->user()->role === 'admin')
             {{-- DODATNI FILTERI (Vidljivo samo adminu) --}}
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

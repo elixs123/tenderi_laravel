@@ -13,6 +13,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Smalot\PdfParser\Parser;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -52,9 +53,22 @@ class TenderProgress extends Component
     public $competitorName = '';
     public $competitorPrice = '';
 
+    // EJN kredencijali modal
+    public bool $showEjnModal = false;
+    public string $ejnUsername = '';
+    public string $ejnPassword = '';
+    public string $ejnStatus = '';
+    public bool $ejnLoading = false;
+
     public function mount($id)
     {
-        $this->wf = TenderWorkflow::with('tasks')->findOrFail($id);
+        $this->wf = TenderWorkflow::with('tasks', 'procedure')->findOrFail($id);
+
+        $settings = auth()->user()->settings ?? [];
+        $this->ejnUsername = $settings['ejn_username'] ?? '';
+        $this->ejnPassword = isset($settings['ejn_password'])
+            ? decrypt($settings['ejn_password'])
+            : '';
 
         if (!empty($this->parsedData['konkurencija'])) {
             $this->competitorName = $this->parsedData['konkurencija']['ime'] ?? '';
@@ -65,6 +79,299 @@ class TenderProgress extends Component
             $this->parsedData = $this->wf->ai_parsed_data;
             $this->initArrays();
         }
+    }
+
+    public function openEjnModal(): void
+    {
+        $this->ejnStatus = '';
+        $this->showEjnModal = true;
+    }
+
+    public function closeEjnModal(): void
+    {
+        $this->showEjnModal = false;
+        $this->ejnStatus = '';
+    }
+
+    public function saveEjnCredentials(): void
+    {
+        $this->validate([
+            'ejnUsername' => 'required|min:3',
+            'ejnPassword' => 'required|min:4',
+        ], [
+            'ejnUsername.required' => 'Korisničko ime je obavezno.',
+            'ejnPassword.required' => 'Šifra je obavezna.',
+        ]);
+
+        $user = auth()->user();
+        $settings = $user->settings ?? [];
+        $settings['ejn_username'] = $this->ejnUsername;
+        $settings['ejn_password'] = encrypt($this->ejnPassword);
+        $user->update(['settings' => $settings]);
+
+        $this->ejnStatus = 'saved';
+    }
+
+    /**
+     * Realan Chrome User-Agent — izbjegava "Guzzle" otisak.
+     */
+    private const EJN_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+    /**
+     * Realistični HTTP headeri (kao Chrome browser).
+     */
+    private function ejnBrowserHeaders(): array
+    {
+        return [
+            'User-Agent'      => self::EJN_USER_AGENT,
+            'Accept'          => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language' => 'bs-BA,bs;q=0.9,hr;q=0.8,en;q=0.7',
+            'Accept-Encoding' => 'gzip, deflate, br',
+            'Cache-Control'   => 'no-cache',
+            'Pragma'          => 'no-cache',
+        ];
+    }
+
+    /**
+     * Random "ljudski" delay (u milisekundama).
+     */
+    private function humanDelay(int $minMs = 2000, int $maxMs = 5000): void
+    {
+        usleep(rand($minMs, $maxMs) * 1000);
+    }
+
+    public function downloadEjnPdf(): void
+    {
+        $this->ejnStatus = 'loading';
+
+        if (empty($this->ejnUsername) || empty($this->ejnPassword)) {
+            $this->ejnStatus = 'no_credentials';
+            return;
+        }
+
+        $userId = auth()->id() ?? 0;
+
+        // 🛡️ THROTTLE: max 1 download/min po useru
+        $throttleKey = "ejn_throttle:user:{$userId}";
+        if (Cache::has($throttleKey)) {
+            $sekDoSljedeceg = Cache::get($throttleKey . ':until', 60);
+            $this->ejnStatus = 'rate_limited';
+            $this->dispatch('notify', [
+                'type'    => 'warning',
+                'message' => "Sačekajte ~{$sekDoSljedeceg}s prije sljedećeg preuzimanja (zaštita od blokade)."
+            ]);
+            return;
+        }
+        Cache::put($throttleKey, true, now()->addSeconds(60));
+        Cache::put($throttleKey . ':until', 60, now()->addSeconds(60));
+
+        try {
+            $cookies = $this->getOrLoginEjnSession($userId);
+
+            if ($cookies === false) {
+                $this->ejnStatus = 'wrong_credentials';
+                return;
+            }
+            if ($cookies === null) {
+                $this->ejnStatus = 'login_failed';
+                return;
+            }
+
+            // 🐢 Ljudski delay prije pretrage
+            $this->humanDelay(2000, 4000);
+
+            // 2. Otvori stranicu tendera (uz Referer kao da je iz menija)
+            $noticeNumber = $this->wf->procedure->notice_number ?: $this->wf->procedure->number;
+            $tenderRes = $this->ejnRequestWithRetry(function () use ($cookies, $noticeNumber) {
+                return Http::withoutVerifying()
+                    ->withHeaders(array_merge($this->ejnBrowserHeaders(), [
+                        'Referer' => 'https://www.ejn.gov.ba/',
+                    ]))
+                    ->withOptions([
+                        'cookies'         => $cookies,
+                        'allow_redirects' => true,
+                    ])
+                    ->timeout(30)
+                    ->get('https://www.ejn.gov.ba/Announcement/Search', [
+                        'announcementNo' => $noticeNumber,
+                    ]);
+            });
+
+            if (!$tenderRes || !$tenderRes->successful()) {
+                // Možda je sesija istekla — bacaj cache i prekini
+                Cache::forget("ejn_session:user:{$userId}");
+                $this->ejnStatus = 'search_failed';
+                return;
+            }
+
+            // 3. Traži PDF linkove u HTML-u (sad i docs.ejn.gov.ba apsolutni linkovi)
+            preg_match_all('/href="([^"]+\.pdf[^"]*)"/i', $tenderRes->body(), $pdfMatches);
+            preg_match_all('/href="(https?:\/\/docs\.ejn\.gov\.ba\/[^"]+)"/i', $tenderRes->body(), $docsEjnMatches);
+            preg_match_all('/href="([^"]*[Dd]ocument[^"]*)"/', $tenderRes->body(), $docMatches);
+
+            $pdfUrls = array_unique(array_merge(
+                $docsEjnMatches[1] ?? [],   // prioritet apsolutnim linkovima
+                $pdfMatches[1] ?? [],
+                $docMatches[1] ?? []
+            ));
+
+            if (empty($pdfUrls)) {
+                $this->ejnStatus = 'no_pdf';
+                return;
+            }
+
+            // 🐢 Ljudski delay prije skidanja
+            $this->humanDelay(1500, 3500);
+
+            // 4. Skini prvi PDF
+            $pdfUrl = str_starts_with($pdfUrls[0], 'http')
+                ? $pdfUrls[0]
+                : 'https://www.ejn.gov.ba' . $pdfUrls[0];
+
+            $pdfRes = $this->ejnRequestWithRetry(function () use ($cookies, $pdfUrl) {
+                return Http::withoutVerifying()
+                    ->withHeaders(array_merge($this->ejnBrowserHeaders(), [
+                        'Referer' => 'https://www.ejn.gov.ba/Announcement/Search',
+                        'Accept'  => 'application/pdf,*/*',
+                    ]))
+                    ->withOptions(['cookies' => $cookies])
+                    ->timeout(60)
+                    ->get($pdfUrl);
+            });
+
+            if (!$pdfRes || !$pdfRes->successful()) {
+                $this->ejnStatus = 'download_failed';
+                return;
+            }
+
+            // 💾 Spasi UUID/URL u procedure za buduće brzo preuzimanje
+            if (str_contains($pdfUrl, 'docs.ejn.gov.ba')) {
+                $this->wf->procedure->update(['documentation_url' => $pdfUrl]);
+            }
+
+            // 5. Spremi PDF lokalno
+            $filename = 'ejn_' . $this->wf->procedure_id . '_' . time() . '.pdf';
+            $path = storage_path('app/private/tender_docs/' . $filename);
+
+            if (!is_dir(dirname($path))) {
+                mkdir(dirname($path), 0755, true);
+            }
+
+            file_put_contents($path, $pdfRes->body());
+
+            $this->ejnStatus = 'success:' . $filename;
+            $this->dispatch('notify', ['type' => 'success', 'message' => 'PDF preuzet: ' . $filename]);
+
+        } catch (\Exception $e) {
+            Log::error('EJN PDF download greška', ['msg' => $e->getMessage(), 'wf' => $this->wf->id]);
+            $this->ejnStatus = 'error';
+        }
+    }
+
+    /**
+     * Vraća login cookie-je za EJN portal.
+     * - Koristi keš (30 min) ako sesija već postoji za ovog usera
+     * - Inače radi login i kešira rezultat
+     *
+     * Povratne vrijednosti:
+     *   array|object cookies — uspješno
+     *   false                — pogrešni kredencijali
+     *   null                 — neka druga greška
+     */
+    private function getOrLoginEjnSession(int $userId)
+    {
+        $cacheKey = "ejn_session:user:{$userId}";
+
+        // Pokušaj keširanu sesiju
+        if ($cached = Cache::get($cacheKey)) {
+            try {
+                return unserialize($cached);
+            } catch (\Throwable $e) {
+                Cache::forget($cacheKey);
+            }
+        }
+
+        // 1. Prvo idi na home stranicu (kao normalan korisnik), pa onda login
+        Http::withoutVerifying()
+            ->withHeaders($this->ejnBrowserHeaders())
+            ->withOptions(['cookies' => true])
+            ->timeout(15)
+            ->get('https://www.ejn.gov.ba/');
+
+        $this->humanDelay(800, 1800);
+
+        // 2. Login
+        $loginRes = $this->ejnRequestWithRetry(function () {
+            return Http::withoutVerifying()
+                ->withHeaders(array_merge($this->ejnBrowserHeaders(), [
+                    'X-Requested-With' => 'XMLHttpRequest',
+                    'Referer'          => 'https://www.ejn.gov.ba/',
+                    'Origin'           => 'https://www.ejn.gov.ba',
+                ]))
+                ->withOptions(['cookies' => true])
+                ->asForm()
+                ->timeout(20)
+                ->post('https://www.ejn.gov.ba/Profile/SignIn', [
+                    'UserName' => $this->ejnUsername,
+                    'Password' => $this->ejnPassword,
+                ]);
+        });
+
+        if (!$loginRes) {
+            return null;
+        }
+        if ($loginRes->status() === 401) {
+            return false;
+        }
+        if (!$loginRes->successful()) {
+            return null;
+        }
+
+        $cookies = $loginRes->cookies();
+        Cache::put($cacheKey, serialize($cookies), now()->addMinutes(30));
+
+        return $cookies;
+    }
+
+    /**
+     * Wrappa HTTP poziv u retry logiku — 1x ponovi nakon delaya
+     * ako dobiješ 429 (Too Many Requests) ili 403 (Forbidden).
+     */
+    private function ejnRequestWithRetry(callable $request, int $maxRetries = 1)
+    {
+        $attempt = 0;
+        $lastResponse = null;
+
+        while ($attempt <= $maxRetries) {
+            try {
+                $response = $request();
+                $lastResponse = $response;
+
+                // Uspjeh ili greška koja nije rate limit → ne ponavljaj
+                if (!in_array($response->status(), [429, 403, 503])) {
+                    return $response;
+                }
+
+                // Ako je još retry-a → čekaj i ponovi
+                if ($attempt < $maxRetries) {
+                    Log::warning('EJN rate limit detektovan, retry za 60s', [
+                        'status' => $response->status(),
+                        'attempt' => $attempt + 1,
+                    ]);
+                    sleep(60);
+                }
+            } catch (\Throwable $e) {
+                Log::error('EJN HTTP greška', ['msg' => $e->getMessage(), 'attempt' => $attempt]);
+                if ($attempt >= $maxRetries) {
+                    return null;
+                }
+                sleep(5);
+            }
+
+            $attempt++;
+        }
+
+        return $lastResponse;
     }
 
     public function saveCompetitor()
