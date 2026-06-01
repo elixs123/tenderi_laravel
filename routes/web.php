@@ -11,9 +11,13 @@ use App\Notifications\NewTenderDetected;
 use App\Models\Procedure;
 use App\Models\CpvCode;
 use App\Livewire\User\Settings;
+use App\Http\Controllers\Api\TenderApiController;
 use Illuminate\Support\Facades\Notification;
 
 Route::get('/login', Login::class)->name('login')->middleware('guest');
+
+
+Route::get('/tenders', [TenderApiController::class, 'acceptedTenders']);
 
 Route::middleware('auth')->group(function () {
     Route::post('/logout', function (Illuminate\Http\Request $request) {
@@ -29,7 +33,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/postavke', Settings::class)->name('user.settings');
 
-    Route::get('/tenders', ListTenders::class)->name('tenders.index');
+    Route::get('/tenderi', ListTenders::class)->name('tenders.index');
+
 
     Route::get('/cpv-kodovi', CpvManagement::class)->name('cpv.management');
 
@@ -37,7 +42,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/dashboard', DashboardIndex::class)->name('dashboard');
 
-    Route::get('/tenders/announcements', MarketRadar::class)
+    Route::get('/tenderi/najave', MarketRadar::class)
         ->name('tenders.announcements');
 });
 

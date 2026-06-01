@@ -22,10 +22,10 @@
         </a>
 
         {{-- TENDERS MAIN --}}
-        <a href="/tenders"
+        <a href="/tenderi"
            wire:navigate
            class="flex items-center gap-3 p-3.5 rounded-2xl transition-all group
-           {{ request()->is('tenders') || (request()->is('tenders/*') && !request()->is('tenders/announcements'))
+           {{ request()->is('tenderi') || (request()->is('tenderi/*') && !request()->is('tenderi/najave'))
                 ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 font-semibold border-r-2 border-blue-500'
                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 dark:hover:text-white' }}">
             <i data-lucide="briefcase" class="w-5 h-5"></i>
@@ -44,10 +44,10 @@
         </a>
 
         {{-- ANNOUNCEMENTS --}}
-        <a href="/tenders/announcements"
+        <a href="/tenderi/najave"
            wire:navigate
            class="flex items-center gap-3 p-3.5 rounded-2xl transition-all group
-           {{ request()->is('tenders/announcements')
+           {{ request()->is('tenderi/najave')
                 ? 'bg-blue-600/10 text-blue-600 dark:text-blue-400 font-semibold border-r-2 border-blue-500'
                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 dark:hover:text-white' }}">
             <i data-lucide="megaphone" class="w-5 h-5"></i>
