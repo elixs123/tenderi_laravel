@@ -28,6 +28,7 @@ class WeeklyManagementReport extends Notification
         $total = $this->accepted->count() + $this->rejected->count() + $this->pending->count();
 
         return (new \Illuminate\Notifications\Messages\MailMessage)
+            ->from('no-reply@pennyplus.com', 'Izvještaj - Tenderi')
             ->subject("Sedmični izvještaj — {$this->weekFrom} / {$this->weekTo} ({$total} tendera)")
             ->view('emails.management.weekly-report', [
                 'accepted' => $this->accepted,
