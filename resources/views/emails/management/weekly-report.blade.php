@@ -61,6 +61,7 @@
         .pill-red { background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.2); }
         .pill-yellow { background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.2); }
         .pill-blue { background: rgba(59,130,246,0.1); color: #2563eb; border: 1px solid rgba(59,130,246,0.2); }
+        .pill-orange { background: rgba(249,115,22,0.1); color: #ea580c; border: 1px solid rgba(249,115,22,0.2); }
 
         .empty-row td { color: #94a3b8; font-style: italic; text-align: center; padding: 16px; }
 
@@ -132,8 +133,8 @@
                         </td>
                         <td>
                             @php
-                                $pillMap = ['accepted'=>'pill-green','offer_submitted'=>'pill-blue','documentation_uploaded'=>'pill-blue','won'=>'pill-green','completed'=>'pill-green'];
-                                $labelMap = ['accepted'=>'Prihvaćen','offer_submitted'=>'Ponuda','documentation_uploaded'=>'Dok. učitana','won'=>'Dobijen','completed'=>'Završen'];
+                                $pillMap = ['accepted'=>'pill-green','offer_submitted'=>'pill-blue','documentation_uploaded'=>'pill-blue','won'=>'pill-green','completed'=>'pill-green','cancelled'=>'pill-orange'];
+                                $labelMap = ['accepted'=>'Prihvaćen','offer_submitted'=>'Ponuda','documentation_uploaded'=>'Dok. učitana','won'=>'Dobijen','completed'=>'Završen','cancelled'=>'Prekinut'];
                             @endphp
                             <span class="status-pill {{ $pillMap[$w->status] ?? 'pill-green' }}">{{ $labelMap[$w->status] ?? $w->status }}</span>
                         </td>

@@ -31,6 +31,8 @@
         .win { color: #10b981; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); }
         .progress { color: #3b82f6; background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.2); }
         .lost { color: #ef4444; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); }
+        .cancelled { color: #f97316; background: rgba(249, 115, 22, 0.1); border-color: rgba(249, 115, 22, 0.2); }
+        .cancel-reason { color: #f97316; font-size: 11px; font-style: italic; margin-top: 5px; display: block; font-weight: 500; }
         
         .price { font-family: 'Courier New', monospace; font-weight: 800; font-size: 15px; color: #ffffff; }
         .btn { display: inline-block; background: #2563eb; color: #ffffff !important; padding: 18px 35px; border-radius: 16px; text-decoration: none; font-weight: 800; margin-top: 40px; text-transform: uppercase; letter-spacing: 1px; font-size: 12px; }
@@ -84,6 +86,16 @@
                                 </td>
                                 <td><span class="status-pill progress">U radu</span></td>
                                 <td align="right" class="price">45.200,00</td>
+                            </tr>
+
+                            <tr>
+                                <td>
+                                    <span class="ref">Elvis P.</span>
+                                    <span class="buyer">Parlamentarna skupština BiH</span>
+                                    <span class="cancel-reason">⛔ Razlog: Tender prekinut odlukom uprave</span>
+                                </td>
+                                <td><span class="status-pill cancelled">Prekinut</span></td>
+                                <td align="right" class="price">12.800,00</td>
                             </tr>
                         </tbody>
                     </table>

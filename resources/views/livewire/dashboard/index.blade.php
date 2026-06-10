@@ -47,6 +47,7 @@
                                 <option value="active" class="bg-white dark:bg-slate-900">Aktivni</option>
                                 <option value="won" class="bg-white dark:bg-slate-900">Dobijeni</option>
                                 <option value="lost" class="bg-white dark:bg-slate-900">Izgubljeni</option>
+                                <option value="cancelled" class="bg-white dark:bg-slate-900">Prekinuti</option>
                             </select>
                             <i class="fa-solid fa-chevron-down absolute right-0 text-xs text-slate-400 pointer-events-none transition-transform group-hover:translate-y-0.5"></i>
                         </div>
@@ -56,7 +57,7 @@
         </header>
 
         {{-- GLAVNI KPI INDIKATORI (Kartice) --}}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-10">
             
             {{-- Ukupno aktivnih --}}
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-t-4 border-t-indigo-600 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
@@ -85,6 +86,17 @@
                 <div class="bg-slate-50 dark:bg-slate-800/50 px-3 py-2 rounded-lg border border-slate-100 dark:border-slate-800 flex flex-col">
                     <p class="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Vrijednost Ugovora</p>
                     <p class="text-sm font-mono text-slate-800 dark:text-slate-200 font-black">{{ number_format($stats['ukupna_vrijednost_dobijenih'], 2, ',', '.') }} KM</p>
+                </div>
+            </div>
+
+            {{-- Prekinuti --}}
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 border-t-4 border-t-orange-500 rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow">
+                <p class="text-xs font-black uppercase tracking-widest text-orange-600 dark:text-orange-500 mb-1">Prekinuti Tenderi</p>
+                <h3 class="text-4xl font-black text-orange-600 dark:text-orange-500 mb-3">{{ $stats['prekinuti'] }}</h3>
+                <div class="bg-slate-50 dark:bg-slate-800/50 px-3 py-2 rounded-lg border border-slate-100 dark:border-slate-800">
+                    <button wire:click="$set('statusFilter', 'cancelled')" class="text-[9px] font-black uppercase tracking-widest text-orange-500 hover:text-orange-600 transition-colors">
+                        Prikaži prekinute →
+                    </button>
                 </div>
             </div>
 
@@ -198,12 +210,14 @@
                                         'won' => 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30',
                                         'lost' => 'bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-500/30',
                                         'rejected' => 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+                                        'cancelled' => 'bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-400 border-orange-200 dark:border-orange-500/30',
                                         default => 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                                     };
                                     $statusLabels = [
                                         'accepted' => 'Prihvaćen', 'documentation_uploaded' => 'U Procesu',
                                         'offer_submitted' => 'Predat', 'completed' => 'Predat',
-                                        'won' => 'Dobijen', 'lost' => 'Izgubljen', 'rejected' => 'Odbijen'
+                                        'won' => 'Dobijen', 'lost' => 'Izgubljen', 'rejected' => 'Odbijen',
+                                        'cancelled' => 'Prekinut'
                                     ];
                                 @endphp
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1.5 {{ $statusStyles }} border rounded-lg text-[10px] font-black uppercase tracking-widest">
@@ -439,6 +453,7 @@
             'offer_submitted'        => ['Ponuda Poslana',     'indigo',  'fa-paper-plane'],
             'lost'                   => ['Izgubljen',          'rose',    'fa-circle-xmark'],
             'rejected'               => ['Odbijen',            'slate',   'fa-ban'],
+            'cancelled'              => ['Prekinut',           'orange',  'fa-ban'],
             default                  => ['Novo',               'slate',   'fa-file'],
         };
     @endphp
@@ -595,6 +610,20 @@
                     </h3>
                     @if($mt->reason)
                         <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{{ $mt->reason }}</p>
+                    @else
+                        <p class="text-sm text-slate-400 dark:text-slate-500 italic">Razlog nije naveden.</p>
+                    @endif
+                </div>
+                @endif
+
+                {{-- RAZLOG PREKIDA --}}
+                @if($mt->status === 'cancelled')
+                <div class="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-5 border border-orange-200 dark:border-orange-500/30">
+                    <h3 class="text-[10px] font-black uppercase tracking-widest text-orange-600 dark:text-orange-400 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-ban"></i> Razlog prekida
+                    </h3>
+                    @if($mt->cancel_reason)
+                        <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{{ $mt->cancel_reason }}</p>
                     @else
                         <p class="text-sm text-slate-400 dark:text-slate-500 italic">Razlog nije naveden.</p>
                     @endif

@@ -9,7 +9,7 @@ class TenderWorkflow extends Model
     protected $guarded = [];
 
     protected $fillable = [
-    'procedure_id', 'user_id', 'status', 'reason', 'document_path', 'completed_at', 'ai_parsed_data', 'accepted_lots', 'erp_document_id', 'winner_supplier',
+    'procedure_id', 'user_id', 'status', 'reason', 'cancel_reason', 'document_path', 'completed_at', 'ai_parsed_data', 'accepted_lots', 'erp_document_id', 'winner_supplier',
     'final_price',
     'won_at',
     'lost_at'

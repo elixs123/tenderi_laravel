@@ -116,6 +116,18 @@ class ListTenders extends Component
         }
     }
 
+    public function cancelTender($workflowId, $reason = null)
+    {
+        $workflow = \App\Models\TenderWorkflow::find($workflowId);
+        if ($workflow) {
+            $workflow->update([
+                'status' => 'cancelled',
+                'cancel_reason' => $reason ?: null,
+            ]);
+        }
+        $this->dispatch('notify', ['type' => 'info', 'message' => 'Tender prekinut.']);
+    }
+
     public function markAsLost($workflowId)
     {
         $workflow = \App\Models\TenderWorkflow::find($workflowId);
@@ -468,6 +480,7 @@ class ListTenders extends Component
             'won'         => $query->whereHas('workflow', fn($q) => $q->where('status', 'won')),
             'lost'        => $query->whereHas('workflow', fn($q) => $q->where('status', 'lost')),
             'rejected'    => $query->whereHas('workflow', fn($q) => $q->where('status', 'rejected')),
+            'cancelled'   => $query->whereHas('workflow', fn($q) => $q->where('status', 'cancelled')),
             default       => null,
         };
 

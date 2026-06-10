@@ -126,6 +126,11 @@
                     {{ $statusFilter === 'rejected' ? 'bg-slate-600 text-white border-slate-600 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-slate-500 hover:text-slate-600' }}">
                 <span class="w-2 h-2 rounded-full {{ $statusFilter === 'rejected' ? 'bg-white/60' : 'bg-slate-500' }}"></span> Odbijeni
             </button>
+            <button wire:click="$set('statusFilter', 'cancelled')"
+                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
+                    {{ $statusFilter === 'cancelled' ? 'bg-orange-500 text-white border-orange-500 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:border-orange-400 hover:text-orange-500' }}">
+                <span class="w-2 h-2 rounded-full {{ $statusFilter === 'cancelled' ? 'bg-white/60' : 'bg-orange-500' }}"></span> Prekinuti
+            </button>
             <button wire:click="$set('statusFilter', 'all')"
                 class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border
                     {{ $statusFilter === 'all' ? 'bg-slate-700 text-white border-slate-700 shadow-md' : 'bg-white dark:bg-slate-900 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-800 hover:border-slate-500 hover:text-slate-600' }}">
@@ -183,6 +188,7 @@
                 'won' => ['color' => 'emerald', 'bg' => 'bg-emerald-50 dark:bg-emerald-500/5', 'border' => 'border-emerald-500', 'text' => 'text-emerald-600 dark:text-emerald-500', 'label' => 'DOBIJEN'],
                 'lost' => ['color' => 'rose', 'bg' => 'bg-rose-50 dark:bg-rose-500/5', 'border' => 'border-rose-500', 'text' => 'text-rose-600 dark:text-rose-500', 'label' => 'IZGUBLJEN'],
                 'rejected' => ['color' => 'slate', 'bg' => 'bg-slate-100 dark:bg-slate-800/50', 'border' => 'border-slate-500', 'text' => 'text-slate-500 dark:text-slate-400', 'label' => 'ODBIJEN'],
+                'cancelled' => ['color' => 'orange', 'bg' => 'bg-orange-50 dark:bg-orange-500/5', 'border' => 'border-orange-500', 'text' => 'text-orange-600 dark:text-orange-400', 'label' => 'PREKINUT'],
                 default => ['color' => 'slate', 'bg' => 'bg-white dark:bg-transparent', 'border' => 'border-slate-300 dark:border-slate-700', 'text' => 'text-slate-400 dark:text-slate-500', 'label' => 'NOVO']
             };
         @endphp
@@ -271,7 +277,7 @@
                     <div class="flex flex-col justify-between items-start lg:items-end min-w-[260px] border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-slate-800/50 pt-6 lg:pt-0 lg:pl-8">
                         <div class="text-left lg:text-right w-full mb-8">
                             @php
-                                $isAccepted = in_array($tender->workflow?->status, ['accepted', 'documentation_uploaded', 'offer_submitted', 'completed', 'won', 'lost']);
+                                $isAccepted = in_array($tender->workflow?->status, ['accepted', 'documentation_uploaded', 'offer_submitted', 'completed', 'won', 'lost', 'cancelled']);
                                 $acceptedLots = is_string($tender->workflow?->accepted_lots) ? json_decode($tender->workflow?->accepted_lots, true) : ($tender->workflow?->accepted_lots ?? []);
                                 $displayValue = ($isAccepted && count($acceptedLots) > 0) ? $tender->lots->whereIn('id', $acceptedLots)->sum('estimated_value') : $tender->lots_sum_estimated_value;
                             @endphp
@@ -289,7 +295,10 @@
                             
                             <div class="w-full">
                                 @if(in_array($tender->workflow?->status, ['accepted', 'documentation_uploaded']))
-                                    <a href="{{ route('tender.progress', $tender->workflow->id) }}" wire:navigate class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center gap-2 transition-all shadow-md text-[10px] font-black uppercase tracking-widest"><i data-lucide="arrow-right-circle" class="w-4 h-4"></i> Nastavi Rad</a>
+                                    <div class="space-y-2">
+                                        <a href="{{ route('tender.progress', $tender->workflow->id) }}" wire:navigate class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl flex items-center justify-center gap-2 transition-all shadow-md text-[10px] font-black uppercase tracking-widest"><i data-lucide="arrow-right-circle" class="w-4 h-4"></i> Nastavi Rad</a>
+                                        <button onclick="openCancelModal('{{ $tender->workflow->id }}')" class="w-full py-2.5 bg-orange-50 dark:bg-orange-500/10 hover:bg-orange-100 dark:hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-200 dark:border-orange-500/30 rounded-xl flex items-center justify-center gap-2 transition-all text-[10px] font-black uppercase tracking-widest"><i data-lucide="ban" class="w-3.5 h-3.5"></i> Prekini tender</button>
+                                    </div>
                                 @elseif(in_array($tender->workflow?->status, ['offer_submitted', 'completed']))
                                     <div class="flex gap-2">
                                         <button wire:click="markAsWon('{{ $tender->workflow->id }}')" class="flex-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 py-3 rounded-xl text-[10px] font-black uppercase transition-all flex justify-center items-center gap-1 shadow-sm"><i data-lucide="trophy" class="w-3 h-3"></i> Dobijen</button>
@@ -335,6 +344,14 @@
             </button>
         </div>
     @endif
+                                @elseif($tender->workflow?->status === 'cancelled')
+                                    <div class="w-full py-3 bg-orange-50 dark:bg-orange-500/10 border border-orange-200 dark:border-orange-500/20 text-orange-600 dark:text-orange-400 rounded-xl flex items-center justify-center gap-2"><i data-lucide="ban" class="w-4 h-4"></i><span class="text-[10px] font-black uppercase tracking-widest">Tender Prekinut</span></div>
+                                    @if($tender->workflow->cancel_reason)
+                                        <div class="mt-2 px-3 py-2 bg-orange-50 dark:bg-orange-500/5 border border-orange-200 dark:border-orange-500/20 rounded-xl">
+                                            <p class="text-[9px] font-black uppercase tracking-widest text-orange-400 mb-0.5">Razlog</p>
+                                            <p class="text-[11px] font-bold text-slate-700 dark:text-slate-300">{{ $tender->workflow->cancel_reason }}</p>
+                                        </div>
+                                    @endif
                                 @elseif($tender->workflow?->status === 'rejected')
                                     <div class="w-full py-3 bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-xl flex items-center justify-center gap-2"><i data-lucide="ban" class="w-4 h-4"></i><span class="text-[10px] font-black uppercase tracking-widest">Odbijeno u startu</span></div>
                                 @else
@@ -507,6 +524,19 @@
         </div>
     </div>
 
+    {{-- CANCEL MODAL --}}
+    <div id="cancelModal" class="fixed inset-0 z-[60] flex items-center justify-center hidden bg-slate-900/40 dark:bg-black/90 backdrop-blur-md">
+        <div class="bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 w-full max-w-md p-8 rounded-2xl shadow-2xl">
+            <h3 class="text-slate-900 dark:text-white font-black text-lg mb-2 uppercase tracking-widest flex items-center gap-3"><i data-lucide="ban" class="text-orange-500 w-5 h-5"></i> Prekini tender</h3>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">Razlog je opcionalan</p>
+            <textarea id="cancelReason" class="w-full bg-slate-50 dark:bg-[#0f172a] border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-xs text-slate-900 dark:text-slate-300 focus:border-orange-400 outline-none h-28 data-mono" placeholder="Navedite razlog prekida (nije obavezno)..."></textarea>
+            <div class="flex gap-4 mt-8">
+                <button onclick="closeCancelModal()" class="flex-1 py-4 text-[10px] font-black text-slate-500 hover:text-slate-900 dark:hover:text-white uppercase">Odustani</button>
+                <button id="confirmCancelBtn" class="flex-1 py-4 bg-orange-500 text-white text-[10px] font-black uppercase rounded-xl shadow-md hover:bg-orange-600">Potvrdi prekid</button>
+            </div>
+        </div>
+    </div>
+
     {{-- REJECT MODAL --}}
     <div id="rejectModal" class="fixed inset-0 z-[60] flex items-center justify-center hidden bg-slate-900/40 dark:bg-black/90 backdrop-blur-md">
         <div class="bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-700 w-full max-w-md p-8 rounded-2xl shadow-2xl">
@@ -624,6 +654,12 @@
         function openRejectModal(id) { currentTenderId = id; document.getElementById('rejectModal').classList.remove('hidden'); }
         function closeRejectModal() { document.getElementById('rejectModal').classList.add('hidden'); document.getElementById('rejectReason').value = ''; }
         document.getElementById('confirmRejectBtn').addEventListener('click', () => { @this.rejectTender(currentTenderId, document.getElementById('rejectReason').value); closeRejectModal(); });
+
+        let currentCancelWorkflowId = null;
+        function openCancelModal(workflowId) { currentCancelWorkflowId = workflowId; document.getElementById('cancelModal').classList.remove('hidden'); }
+        function closeCancelModal() { document.getElementById('cancelModal').classList.add('hidden'); document.getElementById('cancelReason').value = ''; }
+        document.getElementById('confirmCancelBtn').addEventListener('click', () => { @this.cancelTender(currentCancelWorkflowId, document.getElementById('cancelReason').value); closeCancelModal(); });
+        document.getElementById('cancelModal').addEventListener('click', function(e) { if (e.target === this) closeCancelModal(); });
 
         window.addEventListener('open-modal', event => { if (event.detail[0] === 'accept-tender-modal' || event.detail === 'accept-tender-modal') { document.getElementById('acceptTenderModal').classList.remove('hidden'); window.initUI(); } });
         window.addEventListener('close-modal', event => { if (event.detail[0] === 'accept-tender-modal' || event.detail === 'accept-tender-modal') { document.getElementById('acceptTenderModal').classList.add('hidden'); } });

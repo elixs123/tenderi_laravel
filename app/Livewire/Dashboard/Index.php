@@ -24,6 +24,7 @@ class Index extends Component
         'na_cekanju'                  => 0,
         'dobijeni'                    => 0,
         'izgubljeni'                  => 0,
+        'prekinuti'                   => 0,
         'win_rate'                    => 0,
         'ukupna_vrijednost_dobijenih' => 0,
         'prosjek_vrijednosti'         => 0,
@@ -73,6 +74,7 @@ class Index extends Component
         $this->stats['na_cekanju'] = (clone $q)->where('status', 'offer_submitted')->count();
         $this->stats['dobijeni']   = (clone $q)->where('status', 'won')->count();
         $this->stats['izgubljeni'] = (clone $q)->whereIn('status', ['rejected', 'lost'])->count();
+        $this->stats['prekinuti']  = (clone $q)->where('status', 'cancelled')->count();
 
         $zavrseni = $this->stats['dobijeni'] + $this->stats['izgubljeni'];
         $this->stats['win_rate'] = $zavrseni > 0
@@ -337,6 +339,8 @@ class Index extends Component
             $query->whereIn('status', ['rejected', 'lost']);
         } elseif ($this->statusFilter === 'active') {
             $query->whereIn('status', ['accepted', 'documentation_uploaded', 'offer_submitted']);
+        } elseif ($this->statusFilter === 'cancelled') {
+            $query->where('status', 'cancelled');
         }
 
         $recentTenders = $query->latest('updated_at')->paginate(10);
